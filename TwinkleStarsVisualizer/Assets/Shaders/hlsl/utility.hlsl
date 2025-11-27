@@ -142,7 +142,7 @@ float2 kofFractal2(float2 uv, int numLoops, out float scale)
     nor1 = getAngleNormal(radians(234.));
     uv = uv - nor1 * max(0., dot(nor1, uv + float2(baseRad, 0.))) * 2.;
             
-                // arb line reflection params
+    // arb line reflection params
     float2 nor = getAngleNormal(2. / 3. * PI);
             
                 // folding
@@ -165,6 +165,52 @@ float2 kofFractal2(float2 uv, int numLoops, out float scale)
         nor = getAngleNormal((-4. - motion) / 5. * PI); // 3. 5. 
         uv = uv - nor * min(0., dot(uv - float2(baseRad, 0.), nor)) * 2.; // BENDER, dot is the distance proj
                     // uv = uv - nor * dot(uv, nor) * 2. * STIME; // maybe cool
+    }
+                // uv /= scale;
+    return uv;
+}
+
+// star folding is at the dents
+float2 kofFractal3(float2 uv, int numLoops, out float scale)
+{
+                // zoom out, move up
+    uv *= 2.;
+    uv.y -= tan(radians(54.)) * 0.5;
+
+                // star folding (at the dents)
+    uv.x = abs(uv.x);
+  
+    float center = tan(radians(54.));
+    +tan(radians(72.));
+    float baseRad = 0.5;
+
+    float2 nor1 = getAngleNor(radians(54.));
+    uv = uv - nor1 * min(0., dot(nor1, uv - float2(-baseRad, -center))) * 2.;
+                
+    nor1 = getAngleNor(radians(306.));
+    uv = uv - nor1 * min(0., dot(nor1, uv - float2(-baseRad, 0.))) * 2.;
+
+                // arb line reflection params
+    float2 nor = getAngleNor(radians(240.));
+
+                // folding
+    scale = 1.;
+    for (int i = 0; i < numLoops; i++)
+    {
+                    // #0 put back into operation space
+        if (i > 0)
+        {
+            uv *= 3.;
+            uv.x -= 1.5;
+            scale *= 3.;
+        }
+
+                    // #1 half reflection 
+        uv.x = abs(uv.x);
+        uv.x -= 0.5;
+                    // angle reflection
+        uv = uv - nor * min(0., dot(uv, nor)) * 2.; // BENDER, dot is the distance proj
+                    // uv = uv - nor * d * 2. * STIME; maybe cool
     }
                 // uv /= scale;
     return uv;

@@ -139,8 +139,6 @@ Shader "Unlit/sceneSoft3"
                 else { // 2
                      EYEPOS = float3(0.1, - 0.2, 5.);
                 }
-                
-            
             }
 
             float sceneSDF(float3 query, out int materialID, int sceneVer)
@@ -203,42 +201,7 @@ Shader "Unlit/sceneSoft3"
                 return color;
             }
 
-            float2 kofFractal3(float2 uv, int numLoops, out float scale)
-            {
-                // zoom out, move up
-                uv *= 2.;
-                uv.y -= 1.5 / sqrt(3);
-
-                // triangle folding
-                uv.x = abs(uv.x);
-                float2 nor1 = getAngleNor(radians(30.));
-                uv = uv - nor1 * min(0., dot(nor1, uv - float2(1.5, 0.))) * 2.;
-
-                // arb line reflection params
-                float2 nor = getAngleNor(radians(240.));
-
-                // folding
-                scale = 1.;
-                for (int i = 0; i < numLoops; i++)
-                {
-                    // #0 put back into operation space
-                    if (i > 0)
-                    {
-                        uv *= 3.;
-                        uv.x -= 1.5;
-                        scale *= 3.;
-                    }
-
-                    // #1 half reflection 
-                    uv.x = abs(uv.x);
-                    uv.x -= 0.5;
-                    // angle reflection
-                    uv = uv - nor * min(0., dot(uv, nor)) * 2.; // BENDER, dot is the distance proj
-                    // uv = uv - nor * d * 2. * STIME; maybe cool
-                }
-                // uv /= scale;
-                return uv;
-            }
+            
             
             fixed4 frag (v2f i) : SV_Target
             {
@@ -258,15 +221,15 @@ Shader "Unlit/sceneSoft3"
                 float3 col = float3(0., 0., 0.);
 
                 float scale = 1.;
-                uv = kofFractal3(uv, 4, scale);
-                
-                // rescale back the uvs
-                // uv /= scale;
+                uv = kofFractal3(uv, 3., scale);
                 
                 // scale = 1.;
                 // draw line
                 float d = length(uv - float2(clamp(uv.x, -1., 1.), 0.));
                 col += smoothstep(20. / _ScreenParams.y , 0., d / scale);
+
+                // rescale back the uvs
+                // uv /= scale;
                 
                
                 // draw uv (for visualization)
