@@ -1,4 +1,4 @@
-Shader "Unlit/sceneKof3D"
+Shader "Unlit/sceneSoft2"
 {
     Properties
     {
@@ -203,6 +203,8 @@ Shader "Unlit/sceneKof3D"
                 return color;
             }
 
+
+            
             
 
             fixed4 frag (v2f i) : SV_Target
@@ -217,24 +219,44 @@ Shader "Unlit/sceneKof3D"
                 uv.x *= AR;
                 uv.y = - uv.y;
 
+
+                // rotate
+                uv = rotate2d(uv, TIME);
+
                 float3 col = float3(0., 0., 0.);
 
                 float scale = 1.;
-                uv = kofFractal(uv, 3., scale);
-                 // rescale back the uvs!
+                uv = kofFractal2(uv, 1, scale);
+                
+                // rescale back the uvs
                 uv /= scale;
                 
                 // scale = 1.;
                 // draw line
                 float d = length(uv - float2(clamp(uv.x, -1., 1.), 0.));
-                col += smoothstep(20. / _ScreenParams.y , 0., d);
+                col += smoothstep(20. / _ScreenParams.y , 0., d / scale);
                 
                
                 // draw uv (for visualization)
                 col += float3(uv, 0.);
 
                 // col += 1. - uv.y;
-                col = 1. - step(0., uv.y);
+                //col = 1. - step(0., uv.y);
+
+                // draw circles
+                float beatSum = 0.;
+                for (int i = 0; i < 8; i++) {
+                    beatSum = _MeanLevels[i];
+                }
+                
+                beatSum = beatSum * 5000.;
+                beatSum = pow(beatSum, 0.4);
+                
+                // draw star dance
+                col = shootRays(uv);
+
+                col.r += step(length(frac(uv * 2.)), beatSum) * 0.1;
+                
 
                 return float4(col, 1.);
             }

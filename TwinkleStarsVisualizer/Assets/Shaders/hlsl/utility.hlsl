@@ -80,25 +80,33 @@ float2 getAngleNormal(float a)
                 //col.b += smoothstep(0.02, 0., abs(reflLine));
 }
 
+float2 getAngleNor(float a)
+{
+    return float2(- sin(a), cos(a));
+                // visualize (pass uv)
+                //float reflLine = dot(nor1, uv);
+                //col.b += smoothstep(0.02, 0., abs(reflLine));
+}
+
 float2 kofFractal(float2 uv, int numLoops, out float scale)
 {
-                // zoom out, move up
+    // zoom out, move up
     uv *= 2.;
     uv.y -= 1.5 / sqrt(3);
 
-                // triangle folding
+    // triangle folding
     uv.x = abs(uv.x);
-    float2 nor1 = getAngleNormal(PI * 5. / 6.);
-    uv = uv - nor1 * max(0., dot(nor1, uv - float2(1.5, 0.))) * 2.;
+    float2 nor1 = getAngleNor(radians(30.));// getAngleNormal(radians(150.)); // getAngleNormal(PI * 5. / 6.);
+    uv = uv - nor1 * min(0., dot(nor1, uv - float2(1.5, 0.))) * 2.;
 
-                // arb line reflection params
-    float2 nor = getAngleNormal(2. / 3. * PI);
+    // arb line reflection params
+    float2 nor = getAngleNor(radians(240.));
 
                 // folding
     scale = 1.;
     for (int i = 0; i < numLoops; i++)
     {
-                    // #0 put back into operation space
+        // #0 put back into operation space
         if (i > 0)
         {
             uv *= 3.;
@@ -106,12 +114,57 @@ float2 kofFractal(float2 uv, int numLoops, out float scale)
             scale *= 3.;
         }
 
-                    // #1 half reflection    
+        // #1 half reflection    
         uv.x = abs(uv.x);
         uv.x -= 0.5;
-                    // angle reflection
+        // angle reflection
         uv = uv - nor * min(0., dot(uv, nor)) * 2.; // BENDER, dot is the distance proj
-                    // uv = uv - nor * d * 2. * STIME; // maybe cool
+        // uv = uv - nor * d * 2. * STIME; // maybe cool
+    }
+    // uv /= scale;
+    return uv;
+}
+
+// 5 star fractal
+            // use 1-3 numloops and scale back uv for texture
+float2 kofFractal2(float2 uv, int numLoops, out float scale)
+{
+                // zoom out, move up
+    uv *= 2.;
+    uv.y -= 0.5;
+            
+                // triangle folding
+    uv.x = abs(uv.x);
+    float baseRad = 0.3;
+    float2 nor1 = getAngleNormal(PI * 7. / 10.);
+    uv = uv - nor1 * max(0., dot(nor1, uv - float2(baseRad, 0.))) * 2.;
+
+    nor1 = getAngleNormal(radians(234.));
+    uv = uv - nor1 * max(0., dot(nor1, uv + float2(baseRad, 0.))) * 2.;
+            
+                // arb line reflection params
+    float2 nor = getAngleNormal(2. / 3. * PI);
+            
+                // folding
+    scale = 1.;
+    for (int i = 0; i < numLoops; i++)
+    {
+                                // #0 put back into operation space
+        if (i > 0)
+        {
+            uv *= 3.;
+            uv.x -= 1.5;
+            scale *= 3.;
+        }
+            
+                                // #1 half reflection    
+        uv.x = abs(uv.x);
+                   //  uv.x -= 1.;
+                    // angle reflection
+        float motion = (STIME * 0.5 + 0.5) * 0.5; // += 0-0.5, just time, etc., -0.5 t0 0.5
+        nor = getAngleNormal((-4. - motion) / 5. * PI); // 3. 5. 
+        uv = uv - nor * min(0., dot(uv - float2(baseRad, 0.), nor)) * 2.; // BENDER, dot is the distance proj
+                    // uv = uv - nor * dot(uv, nor) * 2. * STIME; // maybe cool
     }
                 // uv /= scale;
     return uv;
