@@ -25,6 +25,8 @@ struct Intersection
     float distance;
     int materialID;
     bool hit;
+    int steps;
+    float bloom;
 };
 
 // ------------------------- TRANSFORMS ------------------------
@@ -703,11 +705,28 @@ Intersection sdfRayMarch(Ray ray, float time, int sceneVer)
     Intersection intersection;
     float3 queryPoint = ray.origin;
     int mat;
+    
+    float bloomAccum = 0.;
+    
             
     float signedDist = sceneSDF(queryPoint, mat, sceneVer);
             
     for (int i = 0; i < MAX_ITER; ++i)
     {
+        // accumulate bloom light v1
+       
+        float fallOff = 10.;
+        float d = max(signedDist, 0.0);
+        float light = 1. / pow((d * 10. + 0.8) * fallOff, 2.);
+        light = min(1., light);
+        bloomAccum += light;
+        
+        // accumulate bloom light v2
+        //float fallOff = 2.;
+        //float light = 1. / pow((signedDist * 10. + 0.1) * fallOff, 2.);
+        //light *= signedDist;
+        //bloomAccum += light;
+        
         if (abs(signedDist) < EPSILON)
         {
             intersection.hit = true;
@@ -715,9 +734,13 @@ Intersection sdfRayMarch(Ray ray, float time, int sceneVer)
             intersection.normal = calculateNormal(queryPoint, time, sceneVer);
             intersection.distance = length(queryPoint - ray.origin);
             intersection.materialID = mat;
+            intersection.steps = i;
+            intersection.bloom = bloomAccum;
             return intersection;
         }
-            
+        
+        
+        
         queryPoint += ray.dir * signedDist;
         signedDist = sceneSDF(queryPoint, mat, sceneVer);
     }
@@ -726,6 +749,7 @@ Intersection sdfRayMarch(Ray ray, float time, int sceneVer)
     intersection.distance = -1.0; // no hit
     intersection.materialID = 0;
     intersection.normal = float3(0.5, 9.5, 0.5);
+    intersection.bloom = bloomAccum;
     return intersection;
 }
 

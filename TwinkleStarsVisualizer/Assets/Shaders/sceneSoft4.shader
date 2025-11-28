@@ -112,6 +112,8 @@ Shader "Unlit/sceneSoft4"
                 else if (materialID == 2) albedo = float3(0.1, 0.05, 0.05);
                 else albedo = float3(0.5, 1., 0.5);
 
+                albedo = float3(0.5, 0.5, 0.5);
+
                 float3 col = float3(0.0, 0.0, 0.0);
                 for (int i = 0; i < 3; i++) {
                     col += albedo * lights[i].color * max(0., dot(nor, lights[i].dir));
@@ -125,7 +127,7 @@ Shader "Unlit/sceneSoft4"
                 REF = float3(0., 0., 0.);
                 // default
                 if (version == 0) {
-                    EYEPOS = float3(0.0, 1.5, 3.0);
+                    EYEPOS = float3(0.0, 5., 3.0);// * sin(TIME);
                 }
                 else if (version == 1) {
                     // spin
@@ -139,6 +141,8 @@ Shader "Unlit/sceneSoft4"
                 else { // 2
                      EYEPOS = float3(0.1, - 0.2, 5.);
                 }
+
+                
             }
 
             float beatSum() {
@@ -174,10 +178,7 @@ Shader "Unlit/sceneSoft4"
             float kofSDF1(float3 query, out int materialID)
             {
                 materialID = 1;
-            
-                //----------------------------------------------------
-                // 1. XY projection (slab along Z)
-                //----------------------------------------------------
+                // XY
                 float scaleXY;
                 float2 kofXY = kofFractal3(query.xy, 5.0 * _fracBeat + 1.0, scaleXY);
                 kofXY /= scaleXY;
@@ -186,9 +187,7 @@ Shader "Unlit/sceneSoft4"
                 float slabXY = abs(query.z) - 0.05;
                 float sdfXY = max(dXY, slabXY);
             
-                //----------------------------------------------------
-                // 2. YZ projection (slab along X)
-                //----------------------------------------------------
+                // YZ
                 float scaleYZ;
                 float2 kofYZ = kofFractal3(query.yz, 5.0 * _fracBeat + 1.0, scaleYZ);
                 kofYZ /= scaleYZ;
@@ -197,9 +196,7 @@ Shader "Unlit/sceneSoft4"
                 float slabYZ = abs(query.x) - 0.05;
                 float sdfYZ = max(dYZ, slabYZ);
             
-                //----------------------------------------------------
-                // 3. ZX projection (slab along Y)
-                //----------------------------------------------------
+                // ZX
                 float scaleZX;
                 float2 kofZX = kofFractal3(query.zx, 5.0 * _fracBeat + 1.0, scaleZX);
                 kofZX /= scaleZX;
@@ -208,43 +205,50 @@ Shader "Unlit/sceneSoft4"
                 float slabZX = abs(query.y) - 0.05;
                 float sdfZX = max(dZX, slabZX);
             
-                //----------------------------------------------------
-                // union of the 3 fractal slabs
-                //----------------------------------------------------
+                // union
                 // float finalSDF = smoothUnion(sdfXY, smoothUnion(sdfYZ, sdfZX, 0.5), 0.5);
                 float finalSDF = min(sdfXY, min(sdfYZ, sdfZX));
                 return finalSDF;
             }
 
 
+
             float sceneSDF(float3 query, out int materialID, int sceneVer)
             {
+                query = query - 10. * round(query / 10.);
+
                 query = rotateX(query, TIME * 0.3);
                 query = rotateY(query, TIME * 0.3);
-                materialID = 1;
+                materialID = 1;    
+                // return sphereSDF(query, 0.4);
                 return kofSDF1(query, materialID);
             }
             
+            float3 bgColor(float3 rayDir) {
+                float dirNor = rayDir.y * .5 + .5;
+                return pow(dirNor, 3.);
+            }
 
             float3 shootRays(float2 uv)
             {
                 // camera setup
                 float3 EYEPOS = _CameraPos;
                 float3 REF = _CameraTarget;
-                int switchBt = 3.;//(_intBeat / 4) % 4;
+                int switchBt = (_intBeat / 4) % 4;
                 //float3 EYEPOS;
                 //float3 REF;
                 // cameraMove(EYEPOS, REF, switchBt);
-
-                // EYEPOS = float3(0.1, - 0.2, 5.);//float3(100 * STIME, 10., 100 * CTIME);
+                
+                // EYEPOS = float3(0.0, 2., 1.0);
                 float3 cameraForward = normalize(REF - EYEPOS);
                 float3 cameraRight = normalize(cross(cameraForward, WORLD_UP));
                 float3 cameraUp = normalize(cross(cameraRight, cameraForward));
                 
-
-                // get ray direction (note tan-1(fov/2) = 1 / len(REF - EYE))
-                // changing len(REF-EYE) will change focal length -> fov
-                float3 rayPoint = REF + cameraRight * uv.x + cameraUp * uv.y;
+                float fov = 45.0;
+                float3 rayPoint = EYEPOS 
+                + cameraForward
+                + cameraRight * uv.x * tan(radians(fov)/2)
+                + cameraUp    * uv.y * tan(radians(fov)/2);
                 float3 rayDir = normalize(rayPoint - EYEPOS);
 
                 Ray ray;
@@ -253,15 +257,33 @@ Shader "Unlit/sceneSoft4"
 
                 Intersection intersection = sdfRayMarch(ray, TIME, switchBt);
 
-                float3 color = float3(0.1, 0.1, 0.2);
-                // float3 color = float3(1., 0.1, 0.5); PINK
+                
+                float3 bgcolor = float3(1., 1., 1.) * bgColor(ray.dir);
+                //float s = smoothstep(1., 10., intersection.distance);
+                //float3 color = float3(.5,.6,.7) * pow(s + 0.9,2.);
+                float3 color = bgcolor;
 
-                if (intersection.hit)// && intersection.distance < 10000.) // TODO
+                if (intersection.hit && intersection.distance < 10000.) // TODO
                 {
                     
                     color = getSimpleShading(intersection.normal, intersection.materialID);
+
+                    // AO
+                    float strength = 2.;
+                    float ao = 1. - intersection.steps * strength / (float)MAX_ITER;
+
+                    color *= ao;          
                 }
-                
+
+                // Bloom
+                float bloomIntensity = 0.3;
+                float3 bloomColor = float3(0., 0.5, 0.9);
+                color += bloomColor * intersection.bloom * 0.3;
+
+                // fog
+                float s = smoothstep(1., 100., intersection.distance);
+                color = lerp(color, bgcolor, s);
+
                 return color;
             }
 
@@ -290,7 +312,6 @@ Shader "Unlit/sceneSoft4"
 
                 
                 // col += kofFractal(uv, 1, scale).y * 0.5;
-
                 return float4(col, 1.);
             }
             ENDCG
