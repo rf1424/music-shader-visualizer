@@ -92,17 +92,22 @@ Shader "Unlit/sceneSoft4"
                 float3 color;
             };
 
+
+
+
             float3 getSimpleShading(float3 nor, int materialID) {
                 Light lights[3];
 
-                lights[0].dir   = normalize(float3(10.0, 10.0, 15.0));
-                lights[0].color = float3(1.0, 1.0, 0.1) * 1.5;
+                // Super Early Morning Light
+                lights[0].dir   = normalize(float3(-1.0, -0.3, -0.5));   
+                lights[0].color = float3(0.9, 0.6, 0.3) * 0.2;         
+
+                lights[1].dir   = normalize(float3(0.2, 1.0, -0.2));      
+                lights[1].color = float3(0.4, 0.6, 0.9) * 0.7;            
                 
-                lights[1].dir   = float3(0.0, 1.0, 0.0);
-                lights[1].color = float3(0.7, 0.2, 0.7) * 0.5;
-                
-                lights[2].dir   = normalize(-float3(15.0, 0.0, 10.0));
-                lights[2].color = float3(0.1, 0.3, 0.8) * 0.2;
+                lights[2].dir   = normalize(float3(0.0, -0.7, 1.0));     
+                lights[2].color = float3(0.3, 0.4, 0.6) * 0.3;           
+
 
                 
                 // TEMP
@@ -112,7 +117,7 @@ Shader "Unlit/sceneSoft4"
                 else if (materialID == 2) albedo = float3(0.1, 0.05, 0.05);
                 else albedo = float3(0.5, 1., 0.5);
 
-                albedo = float3(0.5, 0.5, 0.5);
+                albedo = float3(0.01, 0.01, 0.01);//float3(0.5, 0.5, 0.5);
 
                 float3 col = float3(0.0, 0.0, 0.0);
                 for (int i = 0; i < 3; i++) {
@@ -122,6 +127,59 @@ Shader "Unlit/sceneSoft4"
                 col = pow(col, 1.0 / 2.2);
                 return col;
             }
+
+            float3 getSimpleShading2(float3 N, float3 V, int materialID)
+            {
+                Light lights[3];
+            
+                // lights
+                lights[0].dir   = normalize(float3(-1.0, -0.3, -0.5));   
+                lights[0].color = float3(0.1, 0.9, 0.7) * 0.2;
+            
+                lights[1].dir   = normalize(float3(0.2, 1.0, -0.2));
+                lights[1].color = float3(0.4, 0.6, 0.9) * 0.7;
+            
+                lights[2].dir   = normalize(float3(0.0, -0.7, 1.0));
+                lights[2].color = float3(0.3, 0.4, 0.6) * 0.3;
+            
+                // material
+                float3 metalColor;
+                float metalness;
+                float roughness;
+            
+                materialID = 1;
+                if (materialID == 0) { metalColor=float3(1.0,0.8,0.3); metalness=1.; roughness=0.15; }
+                else if (materialID == 1) { metalColor=float3(1.0,0.2,0.6); metalness=1.; roughness=0.2; }
+                else if (materialID == 2) { metalColor=float3(0.2,0.05,0.05); metalness=1.; roughness=0.3; }
+                else { metalColor=float3(0.8,0.9,1.0); metalness=0.; roughness=0.5; } // default
+            
+               
+                float3 diffuseColor = lerp(float3(0.01,0.01,0.01), metalColor * 0.05, 1.0 - metalness);  
+                float3 specColor = lerp(float3(1.0,1.0,1.0), metalColor, metalness);
+                float shininess = lerp(256.0, 8.0, roughness);
+            
+                // lighting
+                float3 result = 0;
+                for (int i=0; i<3; i++)
+                {
+                    float3 L = lights[i].dir;
+                    float3 H = normalize(L + V);
+            
+                    float NdotL = max(dot(N, L), 0.0);
+            
+                    // Diffuse
+                    float3 diff = diffuseColor * lights[i].color * NdotL;
+            
+                    // Specular
+                    float spec = pow(max(dot(N, H), 0.0), shininess);
+                    float3 specular = specColor * spec * lights[i].color;
+            
+                    result += diff + specular;
+                }
+            
+                return pow(result, 1.0/2.2);
+            }
+
 
             void cameraMove(out float3 EYEPOS, out float3 REF, int version) {
                 REF = float3(0., 0., 0.);
@@ -145,18 +203,6 @@ Shader "Unlit/sceneSoft4"
                 
             }
 
-            float beatSum() {
-                float beatSum = 0.;
-                for (int i = 0; i < 8; i++) {
-                    beatSum = _MeanLevels[i];
-                }
-                
-                beatSum = beatSum * 5000.;
-                beatSum = pow(beatSum, 0.4);
-                return beatSum;
-            }
-            
-
             float kofSDF0(float3 query, out int materialID) {
 
                 materialID = 1;
@@ -173,36 +219,90 @@ Shader "Unlit/sceneSoft4"
                 // return sphereSDF(query, 0.2);
             }
 
-
+            // modified for sdf
+            // star folding is at the dents
+            float2 kofFractal4(float2 uv, int numLoops, out float scale)
+            {
+                // zoom out, move up
+                uv *= 2.;
+                uv.y -= tan(radians(54.)) * 0.5;
+            
+                // star folding (at the dents)
+                uv.x = abs(uv.x);
+              
+                float center = tan(radians(54.));
+                +tan(radians(72.));
+                float baseRad = 0.5;
+            
+                float2 nor1 = getAngleNor(radians(54.));
+                uv = uv - nor1 * min(0., dot(nor1, uv - float2(-baseRad, -center))) * 2.;
+                            
+                nor1 = getAngleNor(radians(306.));
+                uv = uv - nor1 * min(0., dot(nor1, uv - float2(-baseRad, 0.))) * 2.;
+            
+                // arb line reflection params
+                float2 nor = getAngleNor(radians(TIME * 10.));//radians(240));getAngleNor(radians(240));
+            
+                            // folding
+                scale = 1.;
+                for (int i = 0; i < numLoops; i++)
+                {
+                    // #0 put back into operation space
+                    if (i > 0)
+                    {
+                        uv *= 3.;
+                        uv.x -= 1.5;
+                        
+                    }
+                    scale *= 3.;
+                    // #1 half reflection 
+                    uv.x = abs(uv.x);
+                    uv.x -= 0.5;
+                    // angle reflection
+                    uv = uv - nor * min(0., dot(uv, nor)) * 2.; // BENDER, dot is the distance proj
+                    // uv = uv - nor * min(0., dot(uv, nor)) * 2. * STIME; // maybe cool
+                }
+                // uv /= scale;
+                return uv;
+            }
 
             float kofSDF1(float3 query, out int materialID)
             {
                 materialID = 1;
+
+                // float thickness = 0.03;
+                // float complexity = 2;3. * (_fracBeat) + 1;
+                // float lerpTime = 0.;
+
+                float thickness = 0.03;
+                float complexity = 2.;//3. * (_fracBeat) + 1;
+                float lerpTime = 0.;
+
                 // XY
                 float scaleXY;
-                float2 kofXY = kofFractal3(query.xy, 5.0 * _fracBeat + 1.0, scaleXY);
+                float2 kofXY = kofFractal4(query.xy, complexity, scaleXY);
                 kofXY /= scaleXY;
-                float dXY = lerp(kofXY.x, kofXY.y, STIME);
+                float dXY = lerp(kofXY.x, kofXY.y, lerpTime);
             
-                float slabXY = abs(query.z) - 0.05;
+                float slabXY = abs(query.z) - thickness;
                 float sdfXY = max(dXY, slabXY);
             
                 // YZ
                 float scaleYZ;
-                float2 kofYZ = kofFractal3(query.yz, 5.0 * _fracBeat + 1.0, scaleYZ);
+                float2 kofYZ = kofFractal4(query.yz, complexity, scaleYZ);
                 kofYZ /= scaleYZ;
-                float dYZ = lerp(kofYZ.x, kofYZ.y, STIME);
+                float dYZ = lerp(kofYZ.x, kofYZ.y, lerpTime);
             
-                float slabYZ = abs(query.x) - 0.05;
+                float slabYZ = abs(query.x) - thickness;
                 float sdfYZ = max(dYZ, slabYZ);
             
                 // ZX
                 float scaleZX;
-                float2 kofZX = kofFractal3(query.zx, 5.0 * _fracBeat + 1.0, scaleZX);
+                float2 kofZX = kofFractal4(query.zx, complexity, scaleZX);
                 kofZX /= scaleZX;
-                float dZX = lerp(kofZX.x, kofZX.y, STIME);
+                float dZX = lerp(kofZX.x, kofZX.y, lerpTime);
             
-                float slabZX = abs(query.y) - 0.05;
+                float slabZX = abs(query.y) - thickness;
                 float sdfZX = max(dZX, slabZX);
             
                 // union
@@ -215,10 +315,10 @@ Shader "Unlit/sceneSoft4"
 
             float sceneSDF(float3 query, out int materialID, int sceneVer)
             {
-                query = query - 10. * round(query / 10.);
+                // query = query - 10. * round(query / 10.);
 
-                query = rotateX(query, TIME * 0.3);
-                query = rotateY(query, TIME * 0.3);
+                //query = rotateX(query, TIME * 0.3);
+                //query = rotateY(query, TIME * 0.1);
                 materialID = 1;    
                 // return sphereSDF(query, 0.4);
                 return kofSDF1(query, materialID);
@@ -266,7 +366,8 @@ Shader "Unlit/sceneSoft4"
                 if (intersection.hit && intersection.distance < 10000.) // TODO
                 {
                     
-                    color = getSimpleShading(intersection.normal, intersection.materialID);
+                    float3 wo = normalize(intersection.position - ray.origin);
+                    color = getSimpleShading2(intersection.normal,  - wo, intersection.materialID);
 
                     // AO
                     float strength = 2.;
@@ -276,9 +377,9 @@ Shader "Unlit/sceneSoft4"
                 }
 
                 // Bloom
-                float bloomIntensity = 0.3;
-                float3 bloomColor = float3(0., 0.5, 0.9);
-                color += bloomColor * intersection.bloom * 0.3;
+                float bloomIntensity = 0.6;
+                float3 bloomColor = float3(0.7, 0.8, 0.7);
+                color += bloomColor * intersection.bloom * bloomIntensity;
 
                 // fog
                 float s = smoothstep(1., 100., intersection.distance);

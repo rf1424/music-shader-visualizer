@@ -699,6 +699,20 @@ float3 calculateNormal(float3 p, float time, int sceneVer)
     return normalize(float3(nx, ny, nz));
 }
 
+
+float beatSum()
+{
+    float beatSum = 0.;
+    for (int i = 0; i < 8; i++)
+    {
+        beatSum = _MeanLevels[i];
+    }
+                
+    beatSum = beatSum * 5000.;
+    beatSum = pow(beatSum, 0.4);
+    return beatSum;
+}
+            
 // ------------------------ RAY MARCH ------------------------
 Intersection sdfRayMarch(Ray ray, float time, int sceneVer)
 {
@@ -714,8 +728,7 @@ Intersection sdfRayMarch(Ray ray, float time, int sceneVer)
     for (int i = 0; i < MAX_ITER; ++i)
     {
         // accumulate bloom light v1
-       
-        float fallOff = 10.;
+        float fallOff = 8.;
         float d = max(signedDist, 0.0);
         float light = 1. / pow((d * 10. + 0.8) * fallOff, 2.);
         light = min(1., light);
