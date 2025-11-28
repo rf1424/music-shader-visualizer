@@ -283,6 +283,7 @@ Shader "Unlit/sceneSoft4"
                 float2 kofXY = kofFractal4(query.xy, complexity, scaleXY);
                 kofXY /= scaleXY;
                 float dXY = lerp(kofXY.x, kofXY.y, lerpTime);
+                // dXY = abs(dXY) - 0.01;
             
                 float slabXY = abs(query.z) - thickness;
                 float sdfXY = max(dXY, slabXY);
@@ -292,7 +293,8 @@ Shader "Unlit/sceneSoft4"
                 float2 kofYZ = kofFractal4(query.yz, complexity, scaleYZ);
                 kofYZ /= scaleYZ;
                 float dYZ = lerp(kofYZ.x, kofYZ.y, lerpTime);
-            
+                // dYZ = abs(dYZ) - 0.01;
+
                 float slabYZ = abs(query.x) - thickness;
                 float sdfYZ = max(dYZ, slabYZ);
             
@@ -301,7 +303,8 @@ Shader "Unlit/sceneSoft4"
                 float2 kofZX = kofFractal4(query.zx, complexity, scaleZX);
                 kofZX /= scaleZX;
                 float dZX = lerp(kofZX.x, kofZX.y, lerpTime);
-            
+                // dZX = abs(dZX) - 0.01;
+
                 float slabZX = abs(query.y) - thickness;
                 float sdfZX = max(dZX, slabZX);
             
@@ -317,8 +320,8 @@ Shader "Unlit/sceneSoft4"
             {
                 // query = query - 10. * round(query / 10.);
 
-                //query = rotateX(query, TIME * 0.3);
-                //query = rotateY(query, TIME * 0.1);
+                query = rotateX(query, TIME * 0.3);
+                query = rotateY(query, TIME * 0.1);
                 materialID = 1;    
                 // return sphereSDF(query, 0.4);
                 return kofSDF1(query, materialID);
