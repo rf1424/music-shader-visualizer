@@ -653,26 +653,6 @@ float starTunnelSDF2(float3 query, out int materialID)
     return d;
 }
 
-/*
-float starTunnelSDF(float3 query, out int materialID)
-{
-    
-    
-    float spacing = 1.;
-    float queryID = round(clamp(query.z, -10., 10.) / spacing);
-    query.z = query.z - spacing * queryID;
-    
-    float d = planeSDFz(query, 0.5);
-    
-    float star = sdfPentagram(query.xy, 0.5);
-    star = star >= 0. ? 0. : star;
-    
-    d = sqrt(d * d + star * star);
-    
-    materialID = (int) (queryID % 3.);
-    return d;
-}
-*/
 
 // ----------------------------------------------------------------------------------------------------
 
