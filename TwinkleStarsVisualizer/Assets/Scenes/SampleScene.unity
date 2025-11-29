@@ -390,7 +390,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   audioSource: {fileID: 421496379}
-  startTime: 5
+  startTime: 70
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -592,6 +592,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   audioSource: {fileID: 421496379}
   material: {fileID: 2100000, guid: ce1d88fb461c6e643ab4cd74f8588aec, type: 2}
+  materials:
+  - {fileID: 2100000, guid: 2bdb38789e051a64885587fa8fde7c76, type: 2}
+  - {fileID: 2100000, guid: ce1d88fb461c6e643ab4cd74f8588aec, type: 2}
+  - {fileID: 2100000, guid: fcc5ea8e60d3ede41b7e320010bdd6a5, type: 2}
+  - {fileID: 2100000, guid: 60df5f69bc09f27408ced738d4ecca24, type: 2}
+  - {fileID: 2100000, guid: 2bdb38789e051a64885587fa8fde7c76, type: 2}
 --- !u!1 &1330904643
 GameObject:
   m_ObjectHideFlags: 0

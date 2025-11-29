@@ -24,10 +24,9 @@ public class AudioToShader : MonoBehaviour
         Shader.SetGlobalFloatArray("_PeakLevels", spectrum.PeakLevels);
         Shader.SetGlobalFloatArray("_MeanLevels", spectrum.MeanLevels);
 
-        // Debug.Log(spectrum.highestBeat4);
         Shader.SetGlobalFloat("_highestBeat4", spectrum.highestBeat4);
-        Shader.SetGlobalFloat("_time", Time.time);
-        // Debug.Log(Time.time);
+        // Shader.SetGlobalFloat("_time", Time.time);
+        
 
         // bpm
         float bpm = 58.0f;
