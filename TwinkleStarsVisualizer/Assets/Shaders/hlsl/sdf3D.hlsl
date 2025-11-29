@@ -466,18 +466,10 @@ float stardanceSDF0(float3 query, out int materialID)
     materialID = 0;
     
     query -= float3(0., -0.5, 0.);
-    // transforms
-    //float repeatXdist = 2.0; // width of repeating cell
-    //query = repeatX(query, repeatXdist);
-    // query = rotateY(query, time);
-    //uery += float3(0., 0.45, 0.);
     query = bendPoint(query, sin(TIME * 3.));
-    //query -= float3(0., 0.45, 0.);
-    
     
     float3 scale = float3(1., STIME * .01 + 1., 1.);
     query /= scale;
-    
     
     // sdfs
     float sunglasses = sunglassesSDF(query - float3(0.,0.47, 0.23), 0.5);

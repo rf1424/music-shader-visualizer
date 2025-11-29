@@ -130,8 +130,6 @@ Shader "Unlit/sceneJolly"
                 else { // 2
                      EYEPOS = float3(0.1, - 0.2, 5.);
                 }
-                
-            
             }
 
             float sceneSDF(float3 query, out int materialID, int sceneVer)

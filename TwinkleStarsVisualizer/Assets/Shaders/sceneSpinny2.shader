@@ -101,15 +101,9 @@ Shader "Unlit/sceneSpinny2"
                 if (materialID == 0) albedo = float3(0.5, 0.5, 0.5);
                 else if (materialID == 1) albedo = float3(1., 0., 0.5);
                 else if (materialID == 2) albedo = float3(0.1, 0.05, 0.05);
-
                 else albedo = float3(0.5, 1., 0.5);
 
-                
-                float c0 = sin(materialID) *.5+.5;
-                float c1 = 0.;
-                float c2 = 1 - c0;
-
-                albedo = float3(c0, c2, c1);
+                albedo = random3(nor.x + materialID);
 
                 float3 col = float3(0.0, 0.0, 0.0);
                 for (int i = 0; i < 3; i++) {
@@ -139,8 +133,7 @@ Shader "Unlit/sceneSpinny2"
             }
 
             float starTunnelSDF3(float3 query, out int materialID)
-            { 
-                
+            {
                 // float speed = 0.;
                 // for (int i = 0; i < 4; i++)
                 // {
@@ -164,7 +157,6 @@ Shader "Unlit/sceneSpinny2"
                 
                 float plane = abs(query.z) - 0.001; // width 0.01
                 
-                
                 // float3 sq = query / float3(speed, speed, speed);
                 float starFlat = sdfPentagram(query.xy, 0.5);
                 // starFlat *= speed;
@@ -177,10 +169,37 @@ Shader "Unlit/sceneSpinny2"
                 return d;
             }
 
+            float starTunnelSDF4(float3 query, out int materialID)
+            {
+                float tunnelEndz = -23.;
+                // star creature
+                float3 sq = query - float3(0., 0., tunnelEndz - 1.);
+                float scale = 0.5;
+                sq /= scale;
+                float starCreature = stardanceSDF0(sq, materialID);
+                starCreature *= scale;
+
+                // z axis domain repetition 
+                float spacing = .4;
+                float queryID = round(clamp(query.z, tunnelEndz, 10.) / spacing);
+                query.z = query.z - spacing * queryID;
+                
+                // star tunnel
+                float starFlat = sdfPentagram(query.xy, 0.5);
+                starFlat = starFlat - 0.03; // round
+                starFlat = abs(starFlat) - 0.01; // near-edge only
+                float starExtruded = max(starFlat, abs(query.z) - 0.1);
+                
+                float d = min(starExtruded, starCreature);
+                
+                materialID = queryID;
+                return d;
+            }
+
             float sceneSDF(float3 query, out int materialID, int sceneVer)
             {
                 materialID = BROWN;
-                return starTunnelSDF3(query, materialID);
+                return starTunnelSDF4(query, materialID);
             }
 
             float3 shootRays(float2 uv)
@@ -194,16 +213,29 @@ Shader "Unlit/sceneSpinny2"
                 // cameraMove(EYEPOS, REF, switchBt);
 
                 float2 offset = 0.15 * float2(cos(TIME + 0.3), STIME);
-                EYEPOS = float3(0.0, 0., 3.0) + float3(offset, 0.);
+                EYEPOS = float3(0.0, 0., 0.0) + float3(offset, 0.);
+
+                // z axis motion
+                float rawPos = - TIME * 3.;
+                float limitPos = -23.;
+
+                float t = 1. - saturate((rawPos - limitPos) / 3.0); // 0->1 right before limitPos
+                float ease = smoothstep(0., 1., t);
+
+                float zPos = lerp(rawPos, limitPos, ease);//max(rawPos, limitPos)
+                EYEPOS += float3(0., 0., zPos);
+                REF = EYEPOS - float3(0., 0., 1.);//float3(0., 0., limitPos + 1.); // EYEPOS - float3(0., 0., 1.);
 
                 float3 cameraForward = normalize(REF - EYEPOS);
                 float3 cameraRight = normalize(cross(cameraForward, WORLD_UP));
                 float3 cameraUp = normalize(cross(cameraRight, cameraForward));
                 
 
-                // get ray direction (note tan-1(fov/2) = 1 / len(REF - EYE))
-                // changing len(REF-EYE) will change focal length -> fov
-                float3 rayPoint = REF + cameraRight * uv.x + cameraUp * uv.y;
+                float fov = 45.0;
+                float3 rayPoint = EYEPOS 
+                + cameraForward
+                + cameraRight * uv.x * tan(radians(fov)/2)
+                + cameraUp    * uv.y * tan(radians(fov)/2);
                 float3 rayDir = normalize(rayPoint - EYEPOS);
 
                 Ray ray;
@@ -227,8 +259,8 @@ Shader "Unlit/sceneSpinny2"
                 color += bloomColor * intersection.bloom * bloomIntensity;
 
                 // fog
-                float s = smoothstep(1., 50., intersection.distance);
-                color = lerp(color, bgcolor, s);
+                //float s = smoothstep(1., 10., intersection.distance);
+                //color = lerp(color, bgcolor, s);
                 
                 return color;
             }
