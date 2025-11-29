@@ -101,9 +101,9 @@ Shader "Unlit/sceneSpinny2"
                 if (materialID == 0) albedo = float3(0.5, 0.5, 0.5);
                 else if (materialID == 1) albedo = float3(1., 0., 0.5);
                 else if (materialID == 2) albedo = float3(0.1, 0.05, 0.05);
-                else albedo = float3(0.5, 1., 0.5);
-
-                albedo = random3(nor.x + materialID);
+                else if (materialID == 2) albedo = float3(0.5, 1., 0.5);
+                else { albedo = random3(nor.x + materialID); }
+                
 
                 float3 col = float3(0.0, 0.0, 0.0);
                 for (int i = 0; i < 3; i++) {
@@ -171,10 +171,15 @@ Shader "Unlit/sceneSpinny2"
 
             float starTunnelSDF4(float3 query, out int materialID)
             {
+
+                // rotate
+                float angle = .1 * query.z + TIME;
+                query.xy = mul(rot(angle), query.xy);
+
                 float tunnelEndz = -23.;
                 // star creature
                 float3 sq = query - float3(0., 0., tunnelEndz - 1.);
-                float scale = 0.5;
+                float scale = 0.3;
                 sq /= scale;
                 float starCreature = stardanceSDF0(sq, materialID);
                 starCreature *= scale;
@@ -190,9 +195,12 @@ Shader "Unlit/sceneSpinny2"
                 starFlat = abs(starFlat) - 0.01; // near-edge only
                 float starExtruded = max(starFlat, abs(query.z) - 0.1);
                 
-                float d = min(starExtruded, starCreature);
+                float d = starExtruded;//min(starExtruded, starCreature);
+
+                if (starExtruded < starCreature) {
+                    materialID = queryID + 30;
+                }
                 
-                materialID = queryID;
                 return d;
             }
 
@@ -212,8 +220,10 @@ Shader "Unlit/sceneSpinny2"
                 //float3 REF;
                 // cameraMove(EYEPOS, REF, switchBt);
 
+                
+                
                 float2 offset = 0.15 * float2(cos(TIME + 0.3), STIME);
-                EYEPOS = float3(0.0, 0., 0.0) + float3(offset, 0.);
+                EYEPOS += float3(offset, 0.);
 
                 // z axis motion
                 float rawPos = - TIME * 3.;
@@ -223,8 +233,14 @@ Shader "Unlit/sceneSpinny2"
                 float ease = smoothstep(0., 1., t);
 
                 float zPos = lerp(rawPos, limitPos, ease);//max(rawPos, limitPos)
+
+
                 EYEPOS += float3(0., 0., zPos);
-                REF = EYEPOS - float3(0., 0., 1.);//float3(0., 0., limitPos + 1.); // EYEPOS - float3(0., 0., 1.);
+
+                REF = EYEPOS - float3(0., 0., 1.);// // EYEPOS - float3(0., 0., 1.);
+                REF = float3(0., 0., limitPos + 1.);
+                // REF = float3(0., 0., -10.);
+
 
                 float3 cameraForward = normalize(REF - EYEPOS);
                 float3 cameraRight = normalize(cross(cameraForward, WORLD_UP));
