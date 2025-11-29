@@ -191,7 +191,7 @@ Shader "Unlit/sceneSpinny"
                 uv.x *= AR;
                 uv.y = - uv.y;
                 
-                uv = uvOffset(uv);
+                
                 // uv.x = remapRepeat(uv.x, 2.);
                 // baseCol
                 fixed3 col = float3(0., 0., 0.);
@@ -208,7 +208,7 @@ Shader "Unlit/sceneSpinny"
                 // raymarch
                 col = shootRays(uv);
                 
-                col = voronoiFilter(uv, col);
+                
                 
                 return float4(col, 1.);
             }

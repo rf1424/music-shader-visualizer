@@ -370,6 +370,7 @@ float starAnimalSDF2(float3 q, out int materialID)
     float3 bodyScale = float3(1., 1., 0.5);
     float3 bq = q / bodyScale;
     float body = coneSDF(bq, bodyAng, 1.0);
+    body -= 0.02;
     float bodyScaleMin = min(min(bodyScale.x, bodyScale.y), bodyScale.z);
 
     // MIRRROR QUERY
@@ -381,7 +382,7 @@ float starAnimalSDF2(float3 q, out int materialID)
     aq = rotateZ(aq, radians(75.0));
 
     float arms = coneSDF(aq, armAng, 0.4);
-    
+    arms -= 0.01;
     // BODY + ARMS
     float smoothStar = smoothUnion(body, arms, 0.02);
     smoothStar *= bodyScaleMin;

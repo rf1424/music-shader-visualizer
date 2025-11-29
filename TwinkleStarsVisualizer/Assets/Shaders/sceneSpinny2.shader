@@ -303,6 +303,15 @@ Shader "Unlit/sceneSpinny2"
             #pragma fragment fragPass1
             #include "UnityCG.cginc"
 
+            float _Levels[8];
+            float _PeakLevels[8];
+            float _MeanLevels[8];
+            float _highestBeat4; /// simply tracks current peakLevel max for 2
+            float _time;
+            int _intBeat; // float _intBeat;
+            float _fracBeat;
+
+            #include "hlsl/allPostProcess.hlsl"
             sampler2D _MainTex; // rtA
 
             struct appdata
@@ -325,12 +334,39 @@ Shader "Unlit/sceneSpinny2"
                 return o;
             }
 
+            float starRand(float2 uv, float freq) {
+               float2 uvRepeat = uv * 0.5 + 0.5;
+               float2 repeatID = floor(uvRepeat * freq);
+               uvRepeat = frac(uvRepeat * freq) * 2. - 1.;
+               
+               uv = uvRepeat;
+
+               // star outline
+               float d = 0.;
+               float seed = random(repeatID.x * freq * freq + repeatID.y * freq + floor(TIME * 6.));
+               if (seed < 0.2) {
+                   d = sdRoundedCross(uv / 0.5, 1.0);
+                   d = abs(d) - 0.01;
+                   d = 1. - smoothstep(0.0, 0.01, d / freq);
+                   d *= smoothstep(1., 0.95, length(uv));
+               }
+               return d;
+            }
+
             fixed4 fragPass1(v2f i) : SV_Target
             {
+                float2 uv = i.uv * 2. - 1.;
+                float AR = _ScreenParams.x / _ScreenParams.y;
+                uv.x *= AR;
                 float3 col = tex2D(_MainTex, i.uv).rgb;
 
-                col = 1. - col;
-                return float4(col, 1);
+
+               float freq = 10.;
+               float3 starOverlay = starRand(uv, freq) * float3(1., 1., 0.8);
+
+               col = lerp(col, starOverlay, starOverlay.x * 0.3);
+
+               return float4(col, 1);
             }
 
             ENDCG

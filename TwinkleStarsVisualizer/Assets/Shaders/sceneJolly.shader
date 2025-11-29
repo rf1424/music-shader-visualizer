@@ -254,7 +254,7 @@ Shader "Unlit/sceneJolly"
             {
                 float3 col = tex2D(_MainTex, i.uv).rgb;
 
-                col = 1. - col;
+                // col = 1. - col;
                 return float4(col, 1);
             }
 

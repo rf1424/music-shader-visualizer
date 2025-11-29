@@ -3,7 +3,6 @@ Shader "Unlit/sceneSuperJolly"
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
-        [Toggle(_FULLSCREENMODE_ON)] _FullScreenMode ("Full Screen Mode", Float) = 1
     }
     SubShader
     {
@@ -18,7 +17,7 @@ Shader "Unlit/sceneSuperJolly"
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            #pragma shader_feature _FULLSCREENMODE_ON
+            
             
 
             #include "UnityCG.cginc"
@@ -254,7 +253,7 @@ Shader "Unlit/sceneSuperJolly"
             {
                 float3 col = tex2D(_MainTex, i.uv).rgb;
 
-                col = 1. - col;
+                // col = 1. - col;
                 return float4(col, 1);
             }
 

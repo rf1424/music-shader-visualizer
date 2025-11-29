@@ -34,3 +34,21 @@ float sdfPentagram(float2 p, float r)
     float s = sign(p.y * v3.x - p.x * v3.y); // sign
     return d * s;
 }
+
+float sdRoundedCross(in float2 p, in float h)
+{
+    float k = 0.5 * (h + 1.0 / h);
+    p = abs(p);
+
+    if (p.x < 1.0 && p.y < p.x * (k - h) + h)
+    {
+        float2 diff = p - float2(1, k);
+        return k - dot(diff, diff); // dot2 inlined
+    }
+    else
+    {
+        float2 diff1 = p - float2(0, h);
+        float2 diff2 = p - float2(1, 0);
+        return sqrt(min(dot(diff1, diff1), dot(diff2, diff2)));
+    }
+}

@@ -19,15 +19,36 @@ public class ImageEffect : MonoBehaviour
     void Update()
     {
         float t = audioSource.time;
-        Shader.SetGlobalFloat("_time", t);
-        Debug.Log(t);
+        float localT = t;
 
-        if (t < 75f) materialIndex = 0; // TEMP;
-        else if (t < 100f) materialIndex = 1; // 75-100 jolly
-        else if (t < 133.8f) materialIndex = 2; // 100-162 soft
-        else if (t < 162.5f) materialIndex = 3; // 162-200 superjolly
-        else materialIndex = 4;
+        if (t < 75f) // intro
+        {
+            materialIndex = 0;
+            localT = t - 0f;
+        }
+        else if (t < 100f) // jolly
+        {
+            materialIndex = 1;
+            localT = t - 75f;
+        }
+        else if (t < 133.8f) // soft
+        {
+            materialIndex = 2;
+            localT = t - 100f;
+        }
+        else if (t < 162.5f) // superjolly
+        {
+            materialIndex = 3;
+            localT = t - 133.8f;
+        }
+        else // spinny
+        {
+            materialIndex = 4;
+            localT = t - 162.5f;
+        }
+
         material = materials[materialIndex];
+        Shader.SetGlobalFloat("_time", localT);
     }
 
 
