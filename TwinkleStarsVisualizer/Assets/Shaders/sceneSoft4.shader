@@ -9,18 +9,13 @@ Shader "Unlit/sceneSoft4"
     {
         Tags { 
             "RenderType"="Overlay" 
-            "Queue"="Overlay" 
-            // "IgnoreProjector"="True"
-            // "ForceNoShadowCasting"="True"
+            
         }
         LOD 100
 
         Pass
         {
-            ZTest Always
-            ZWrite Off
-            Cull Off
-            Blend Off
+            
             
             CGPROGRAM
             #pragma vertex vert
@@ -51,18 +46,10 @@ Shader "Unlit/sceneSoft4"
             v2f vert (appdata v)
             {
                 v2f o;
-                #ifdef _FULLSCREENMODE_ON
-                    o.vertex = float4(v.vertex.xy * 2.0, 0.0, 1.0);
-                #else
-                    v.vertex.y *= 7.;
-                    v.vertex.x *= 10.;
-                    o.vertex = UnityObjectToClipPos(v.vertex);
-                #endif
-                
-                o.uv = TRANSFORM_TEX(v.uv, _MainTex);
+                o.vertex = UnityObjectToClipPos(v.vertex);
+                o.uv = v.uv;
                 return o;
             }
-
 
             float _Levels[8];
             float _PeakLevels[8];
@@ -395,15 +382,10 @@ Shader "Unlit/sceneSoft4"
             
             fixed4 frag (v2f i) : SV_Target
             {
-                // uv transformations [-1, 1]
-                float2 uv = i.uv * 2. - 1.;
-                #ifdef _FULLSCREENMODE_ON
-                    float AR = _ScreenParams.x / _ScreenParams.y;
-                #else
-                   float AR = 10. / 7.;
-                #endif
+                float2 uv = i.uv * 2 - 1;
+                float AR = _ScreenParams.x / _ScreenParams.y;
                 uv.x *= AR;
-                uv.y = - uv.y;
+                uv.y = -uv.y;
 
                 // rotate
                 // uv = rotate2d(uv, TIME);
@@ -418,6 +400,52 @@ Shader "Unlit/sceneSoft4"
                 // col += kofFractal(uv, 1, scale).y * 0.5;
                 return float4(col, 1.);
             }
+            ENDCG
+        }
+
+        // second pass
+        Pass {
+
+            ZTest Always
+            ZWrite Off
+            Cull Off
+            Blend Off
+
+            CGPROGRAM
+            #pragma vertex vertPass1
+            #pragma fragment fragPass1
+            #include "UnityCG.cginc"
+
+            sampler2D _MainTex; // rtA
+
+            struct appdata
+            {
+                float4 vertex : POSITION;
+                float2 uv : TEXCOORD0;
+            };
+
+            struct v2f
+            {
+                float2 uv : TEXCOORD0;
+                float4 vertex : SV_POSITION;
+            };
+
+            v2f vertPass1(appdata v)
+            {
+                v2f o;
+                o.vertex = UnityObjectToClipPos(v.vertex);
+                o.uv = v.uv;
+                return o;
+            }
+
+            fixed4 fragPass1(v2f i) : SV_Target
+            {
+                float3 col = tex2D(_MainTex, i.uv).rgb;
+
+                col = 1. - col;
+                return float4(col, 1);
+            }
+
             ENDCG
         }
     }
