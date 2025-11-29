@@ -8,8 +8,9 @@ Shader "Unlit/sceneSpinny2"
     SubShader
     {
         Tags { 
-            "RenderType"="Overlay" 
-            "Queue"="Overlay" 
+            "RenderType"="Opaque"
+            // "RenderType"="Overlay" 
+            // "Queue"="Overlay" 
             // "IgnoreProjector"="True"
             // "ForceNoShadowCasting"="True"
         }
@@ -17,10 +18,10 @@ Shader "Unlit/sceneSpinny2"
 
         Pass
         {
-            ZTest Always
-            ZWrite Off
-            Cull Off
-            Blend Off
+            // ZTest Always
+            // ZWrite Off
+            // Cull Off
+            // Blend Off
             
             CGPROGRAM
             #pragma vertex vert
@@ -29,7 +30,6 @@ Shader "Unlit/sceneSpinny2"
             
 
             #include "UnityCG.cginc"
-            
 
             struct appdata
             {
@@ -43,26 +43,18 @@ Shader "Unlit/sceneSpinny2"
                 float4 vertex : SV_POSITION;
             };
 
+            v2f vert (appdata v)
+            {
+                v2f o;
+                o.vertex = UnityObjectToClipPos(v.vertex);
+                o.uv = v.uv;
+                return o;
+            }
+
             sampler2D _MainTex;
             float4 _MainTex_ST;
 
             float _FullScreenMode;
-
-            v2f vert (appdata v)
-            {
-                v2f o;
-                #ifdef _FULLSCREENMODE_ON
-                    o.vertex = float4(v.vertex.xy * 2.0, 0.0, 1.0);
-                #else
-                    v.vertex.y *= 7.;
-                    v.vertex.x *= 10.;
-                    o.vertex = UnityObjectToClipPos(v.vertex);
-                #endif
-                
-                o.uv = TRANSFORM_TEX(v.uv, _MainTex);
-                return o;
-            }
-
 
             float _Levels[8];
             float _PeakLevels[8];
@@ -169,14 +161,16 @@ Shader "Unlit/sceneSpinny2"
                 return d;
             }
 
+            
+
             float starTunnelSDF4(float3 query, out int materialID)
             {
-
+                float tunnelEndz = - 23.;
                 // rotate
                 float angle = .1 * query.z + TIME;
                 query.xy = mul(rot(angle), query.xy);
 
-                float tunnelEndz = -23.;
+                
                 // star creature
                 float3 sq = query - float3(0., 0., tunnelEndz - 1.);
                 float scale = 0.3;
@@ -186,7 +180,7 @@ Shader "Unlit/sceneSpinny2"
 
                 // z axis domain repetition 
                 float spacing = .4;
-                float queryID = round(clamp(query.z, tunnelEndz, 10.) / spacing);
+                float queryID = round(clamp(query.z, tunnelEndz, - tunnelEndz) / spacing);
                 query.z = query.z - spacing * queryID;
                 
                 // star tunnel
@@ -195,7 +189,7 @@ Shader "Unlit/sceneSpinny2"
                 starFlat = abs(starFlat) - 0.01; // near-edge only
                 float starExtruded = max(starFlat, abs(query.z) - 0.1);
                 
-                float d = starExtruded;//min(starExtruded, starCreature);
+                float d = min(starExtruded, starCreature);
 
                 if (starExtruded < starCreature) {
                     materialID = queryID + 30;
@@ -203,6 +197,8 @@ Shader "Unlit/sceneSpinny2"
                 
                 return d;
             }
+
+
 
             float sceneSDF(float3 query, out int materialID, int sceneVer)
             {
@@ -240,7 +236,6 @@ Shader "Unlit/sceneSpinny2"
                 REF = EYEPOS - float3(0., 0., 1.);// // EYEPOS - float3(0., 0., 1.);
                 REF = float3(0., 0., limitPos + 1.);
                 // REF = float3(0., 0., -10.);
-
 
                 float3 cameraForward = normalize(REF - EYEPOS);
                 float3 cameraRight = normalize(cross(cameraForward, WORLD_UP));
@@ -281,40 +276,65 @@ Shader "Unlit/sceneSpinny2"
                 return color;
             }
 
-            fixed4 frag (v2f i) : SV_Target
+            fixed4 frag(v2f i) : SV_Target
             {
-                // uv transformations [-1, 1]
-                float2 uv = i.uv * 2. - 1.;
-                #ifdef _FULLSCREENMODE_ON
-                    float AR = _ScreenParams.x / _ScreenParams.y;
-                #else
-                   float AR = 10. / 7.;
-                #endif
+                float2 uv = i.uv * 2 - 1;
+                float AR = _ScreenParams.x / _ScreenParams.y;
                 uv.x *= AR;
-                uv.y = - uv.y;
-                
-                // uv = uvOffset(uv);
-                // uv.x = remapRepeat(uv.x, 2.);
-                // baseCol
-                fixed3 col = float3(0., 0., 0.);
+                uv.y = -uv.y;
 
-                col = random3(_intBeat);
-
-                
-                
-                float3 squareVignetteCol = squareVignette(uv);
-                col += squareVignetteCol;
-
-                
-
-                // raymarch
-                col = shootRays(uv);
-                
-                // col = voronoiFilter(uv, col);
-                
-                return float4(col, 1.);
+                float3 col = shootRays(uv);
+                return float4(col, 1);
             }
+
             ENDCG
+        }
+
+        // second pass
+        Pass {
+
+            ZTest Always
+            ZWrite Off
+            Cull Off
+            Blend Off
+
+            CGPROGRAM
+            #pragma vertex vertPass1
+            #pragma fragment fragPass1
+            #include "UnityCG.cginc"
+
+            sampler2D _MainTex; // rtA
+
+            struct appdata
+            {
+                float4 vertex : POSITION;
+                float2 uv : TEXCOORD0;
+            };
+
+            struct v2f
+            {
+                float2 uv : TEXCOORD0;
+                float4 vertex : SV_POSITION;
+            };
+
+            v2f vertPass1(appdata v)
+            {
+                v2f o;
+                o.vertex = UnityObjectToClipPos(v.vertex);
+                o.uv = v.uv;
+                return o;
+            }
+
+            fixed4 fragPass1(v2f i) : SV_Target
+            {
+                float3 col = tex2D(_MainTex, i.uv).rgb;
+
+                col = 1. - col;
+                return float4(col, 1);
+            }
+
+            ENDCG
+            
         }
     }
 }

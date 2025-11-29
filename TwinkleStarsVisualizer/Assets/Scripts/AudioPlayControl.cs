@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -16,7 +16,6 @@ public class AudioPlayControl : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+
     }
 }
-
