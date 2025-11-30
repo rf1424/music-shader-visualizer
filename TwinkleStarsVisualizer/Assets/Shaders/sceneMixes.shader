@@ -1,4 +1,4 @@
-Shader "Unlit/sceneSuperJolly"
+Shader "Unlit/sceneMixes"
 {
     Properties
     {
@@ -94,6 +94,7 @@ Shader "Unlit/sceneSuperJolly"
                 }
                 
                 // float3 col = albedo;
+               
                 float3 col = float3(0.0, 0.0, 0.0);
                 for (int i = 0; i < 3; i++) {
                     col += albedo * lights[i].color * max(0., dot(nor, lights[i].dir));
@@ -131,36 +132,26 @@ Shader "Unlit/sceneSuperJolly"
 
             float sceneSDF(float3 query, out int materialID, int sceneVer)
             {
-
+                return superStardanceSDF1(query, materialID);
                 if (sceneVer == 0)
                 {
                     return superStardanceSDF0(query, materialID);
                 }
-                else if (sceneVer == 1)
+                else
                 {
                     return superStardanceSDF1(query, materialID);
                 }
-                else if (sceneVer == 2)
-                {
-                    return superStardanceSDF3(query, materialID);
-                    
-                }
-                else if (sceneVer == 3) {
-                    return superStardanceSDF2(query, materialID);
-                }
-                else {
-                    return superStardanceSDF4(query, materialID);
-                }
-            
+
+                
             }
             
 
-            float3 shootRays(float2 uv)
+            float3 shootRays(float2 uv, int sceneVer)
             {
                 // camera setup
                 float3 EYEPOS = _CameraPos;
                 float3 REF = _CameraTarget;
-                int switchBt = ((_intBeat - 1) / 4) % 5;
+                int switchBt = sceneVer;//((_intBeat - 1) / 4) % 5;
                 //float3 EYEPOS;
                 //float3 REF;
                 cameraMove(EYEPOS, REF, switchBt);
@@ -182,7 +173,7 @@ Shader "Unlit/sceneSuperJolly"
                 ray.origin = EYEPOS;
                 ray.dir = rayDir;
 
-                Intersection intersection = sdfRayMarch(ray, TIME, switchBt);
+                Intersection intersection = sdfRayMarch(ray, TIME, sceneVer);
 
                 // BG
                 // float scale = 1.;
@@ -221,38 +212,79 @@ Shader "Unlit/sceneSuperJolly"
                 return color;
             }
 
+            float starRand2(float2 uv, float freq)
+            {
+                float2 uvRepeat = uv * 0.5 + 0.5;
+                float2 repeatID = floor(uvRepeat * freq);
+                uvRepeat = frac(uvRepeat * freq) * 2. - 1.;
+                           
+                uv = uvRepeat;
+            
+                           // star outline
+                float d = 0.;
+                float seed = random(repeatID.x * freq * freq + repeatID.y * freq + floor(TIME * 6.));
+                if (seed < 0.9)
+                {
+                    float size = random(seed);
+                    d = sdRoundedCross(uv / size, 1.0);
+                    // d = abs(d) - 0.01;
+                    d = 1. - smoothstep(0.0, 0.01, d / freq);
+                    d *= smoothstep(1., 0.95, length(uv));
+                }
+                return d;
+            }
+
+            // mix of big stars too
+            float starRand3(float2 uv) {
+                float2 duv = uv;
+                float d = starRand2(duv, 1.3);
+                d += starRand2(duv * 2. + 0.5, 1.3);
+
+                float r = random(floor(TIME * 6.));
+                float spark = sdRoundedCross(uv * 0.8 + float2(r, frac(r * 10.)) * 2. - 1., 1.0);
+                spark = 1. - smoothstep(0.0, 0.01, spark);
+                float spark2 = sdRoundedCross(uv * 0.9 - float2(frac(r * 10.), frac(r * 23.)) * 2. - 1., 1.0);
+                spark2 = 1. - smoothstep(0.0, 0.01, spark2);
+                d += spark + spark2;
+                d = min(1., d);
+                return d;
+            }
+
+            float3 doubleLayeredStars(float2 uv) {
+                float3 col1 = pow(shootRays(uv, 0).r, 3.);
+
+                float3 col2 = shootRays(uv, 1);
+
+                // BLUR
+                uv = uvOffset(uv);
+
+                // REMAPPER
+                float t = floor((sin(TIME * 0.1) * .5 + .5) * 3.);
+                if ((_intBeat / 4) & 1 == 1) {
+                    uv.x = remapRepeat(uv.x, t);
+                    uv.y = remapRepeat(uv.y, t);
+                }
+                
+                float d = starRand3(uv);
+                return lerp(col1, col2, d);
+            }
+            
+
             fixed4 frag (v2f i) : SV_Target
             {
                 float2 uv = i.uv * 2 - 1;
                 float AR = _ScreenParams.x / _ScreenParams.y;
                 uv.x *= AR;
-                // uv.y = -uv.y;
-                
-                // uv = uvOffset(uv);
-
-                // uv.x = remapRepeat(uv.x, 2.);
-                // baseCol
                 fixed3 col = float3(0., 0., 0.);
-
-                col = random3(_intBeat);
-
-                // USEFUL?
-                // col.g = random(_highestBeat4);
-                float radius = _PeakLevels[2] * 10.;
-                float circle = step(length(uv), radius);
-                col.r += circle; 
                 
-                float3 squareVignetteCol = squareVignette(uv);
-                col += squareVignetteCol;
-
                 
-
+                
                 // raymarch
-                col = shootRays(uv);               
+                // uv = mobius(uv);
 
-                // col *= 1. - vin * 0.4;
+                col = doubleLayeredStars(uv);
+                // col = shootRays(uv, 1);
                 
-                // col = voronoiFilter(uv, col);
                 return float4(col, 1.);
             }
             ENDCG
@@ -293,9 +325,33 @@ Shader "Unlit/sceneSuperJolly"
                 return o;
             }
 
+            
+
+            float3 EdgeCrossFilter(float2 uv)
+            {
+                float2 pixUnit = 1.0 / _ScreenParams.xy;
+                        
+                float3 center = tex2D(_MainTex, uv).rgb;
+                float3 left = tex2D(_MainTex, uv + float2(-pixUnit.x, 0)).rgb;
+                float3 right = tex2D(_MainTex, uv + float2(pixUnit.x, 0)).rgb;
+                float3 top = tex2D(_MainTex, uv + float2(0, pixUnit.y)).rgb;
+                float3 bottom = tex2D(_MainTex, uv + float2(0, -pixUnit.y)).rgb;
+                        
+                            // Simple horizontal and vertical differences
+                float3 hDiff = right - left;
+                float3 vDiff = top - bottom;
+                        
+                            // Combine
+                return sqrt(hDiff * hDiff + vDiff * vDiff);
+            }
+
             fixed4 fragPass1(v2f i) : SV_Target
             {
                 float3 col = tex2D(_MainTex, i.uv).rgb;
+                
+                // overlay outlines
+                // float3 outlines = EdgeCrossFilter(i.uv + 0.2);
+                // col += length(outlines);
 
                 // col = 1. - col;
                 return float4(col, 1);

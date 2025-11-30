@@ -7,7 +7,7 @@ float2 random2(float2 p)
     )) * 43758.5453);
 }
 
-float voronoi(float2 uv, float gridSize)
+float voronoi(float2 uv, float gridSize, out float2 closestPt)
 {
     float2 st = uv * gridSize;
 
@@ -15,6 +15,7 @@ float voronoi(float2 uv, float gridSize)
     float2 f = frac(st);
 
     float minDist = 1000000.0;
+    closestPt = i;
 
     [unroll]
     for (int x = -1; x <= 1; x++)
@@ -26,16 +27,42 @@ float voronoi(float2 uv, float gridSize)
             float2 randomPt = random2(i + offset);
 
             float currDist = length(f - (randomPt + offset));
-            minDist = min(minDist, currDist);
+            if (currDist < minDist)
+            {
+                minDist = currDist;
+                closestPt = i + offset + randomPt;
+
+            }
+            
         }
     }
 
     return minDist;
 }
 
+// Gradient Noise 2D by IQ
+float gradientNoise(float2 st)
+{
+    float2 i = floor(st);
+    float2 f = frac(st);
+
+    float2 u = f * f * (3.0 - 2.0 * f);
+
+    float n00 = dot(random2(i + float2(0.0, 0.0)), f - float2(0.0, 0.0));
+    float n10 = dot(random2(i + float2(1.0, 0.0)), f - float2(1.0, 0.0));
+    float n01 = dot(random2(i + float2(0.0, 1.0)), f - float2(0.0, 1.0));
+    float n11 = dot(random2(i + float2(1.0, 1.0)), f - float2(1.0, 1.0));
+
+    float nx0 = lerp(n00, n10, u.x);
+    float nx1 = lerp(n01, n11, u.x);
+
+    return lerp(nx0, nx1, u.y);
+}
+
 float2 uvOffset(float2 uv)
 {
-    float v = voronoi(uv, 10. + TIME * 10.) * 0.5 + 0.5;
+    float2 closestPt;
+    float v = voronoi(uv, 10. + TIME * 10., closestPt) * 0.5 + 0.5;
     float v2 = frac(v * 34.);
     // return uv += float2(v, v2) *  _fracBeat * 0.1;
     
@@ -46,7 +73,8 @@ float2 uvOffset(float2 uv)
 
 float3 voronoiFilter(float2 uv, float3 col)
 {
-    float voronoiMask = voronoi(uv, 1000. + _fracBeat);
+    float2 closestPt;
+    float voronoiMask = voronoi(uv, 1000. + _fracBeat, closestPt);
     
     voronoiMask = pow(voronoiMask, 3.);
     

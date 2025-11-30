@@ -17,7 +17,8 @@
 #define BLUE 6
 
 
-
+#define CMUL(u, v) float2((u).x*(v).x - (u).y*(v).y, (u).x*(v).y + (u).y*(v).x)
+#define CDIV(u, v) (CMUL((u), float2((v).x, -(v).y)) / dot((v), (v)))
 #define PI 3.14159265
 
 
@@ -62,6 +63,20 @@ float2 scroll(float2 uv, float2 speedXY)
     uv.x = frac((uv.x + ASPECT) / (2.0 * ASPECT)) * (2.0 * ASPECT) - ASPECT;
     uv.y = frac((uv.y + 1.0) / 2.0) * 2.0 - 1.0;
     return uv;
+}
+
+float2 mobius(float2 uv)
+{
+    float2 a = float2(0.9, 0.9);
+    float2 b = float2(0.0, 0.0);
+    float2 c = float2(sin(TIME), 0.0);
+    float2 d = float2(0.0, 0.5);
+    float2 w = uv;
+            
+    float2 num = CMUL(d, w) - b;
+    float2 den = -CMUL(c, w) + a;
+            
+    return CDIV(num, den);
 }
 
 float3 hsv2rgb(float3 c)

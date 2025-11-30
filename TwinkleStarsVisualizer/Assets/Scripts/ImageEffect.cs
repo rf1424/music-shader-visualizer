@@ -22,7 +22,7 @@ public class ImageEffect : MonoBehaviour
         float localT = t;
         float bpm = 58.0f;
         float offset = 0.6f;
-        
+
 
         if (t < 75f) // intro
         {
@@ -46,13 +46,17 @@ public class ImageEffect : MonoBehaviour
             bpm = 72.0f;
             offset = 0f;
         }
-        else // spinny
+        else if (t < 200.0f)// spinny
         {
             materialIndex = 4;
             localT = t - 162.5f;
         }
+        else {
+            materialIndex = 5;
+            localT = t - 200.0f;
+        }
 
-        // Debug.Log(localT);
+        // Debug.Log(t);
 
         material = materials[materialIndex];
 

@@ -174,6 +174,7 @@ Shader "Unlit/sceneSpinny2"
                 
                 // star creature
                 float3 sq = query - float3(0., 0., tunnelEndz - 1.);
+                sq = rotateX(sq, radians(180.));
                 float scale = 0.3;
                 sq /= scale;
                 float starCreature = stardanceSDF0(sq, materialID);
@@ -199,8 +200,6 @@ Shader "Unlit/sceneSpinny2"
                 return d;
             }
 
-
-
             float sceneSDF(float3 query, out int materialID, int sceneVer)
             {
                 materialID = BROWN;
@@ -217,21 +216,24 @@ Shader "Unlit/sceneSpinny2"
                 //float3 REF;
                 // cameraMove(EYEPOS, REF, switchBt);
 
-                
-                
-                float2 offset = 0.15 * float2(cos(TIME + 0.3), STIME);
-                EYEPOS += float3(offset, 0.);
-
                 // z axis motion
-                float rawPos = - TIME * 3.;
+                float zPos = 0.;
                 float limitPos = -23.;
+                float flipt = 15.4;
+                if (TIME < flipt) {
+                    float rawPos = - TIME * 3.;
+                    float t = 1. - saturate((rawPos - limitPos) / 3.0); // 0->1 right before limitPos
+                    float ease = smoothstep(0., 1., t);
 
-                float t = 1. - saturate((rawPos - limitPos) / 3.0); // 0->1 right before limitPos
-                float ease = smoothstep(0., 1., t);
+                    zPos = lerp(rawPos, limitPos, ease);//max(rawPos, limitPos)
+                } else {
+                    float t = TIME - flipt;
+                    zPos = limitPos + t * 3.;
+                    // EYEPOS += float3(10., 0., 0.);
+                }
 
-                float zPos = lerp(rawPos, limitPos, ease);//max(rawPos, limitPos)
-
-
+                float2 offset = 0.15 * float2(cos(TIME + 0.3), STIME);
+                EYEPOS += float3(offset, 0.) * step(limitPos, TIME);
                 EYEPOS += float3(0., 0., zPos);
 
                 REF = EYEPOS - float3(0., 0., 1.);// // EYEPOS - float3(0., 0., 1.);
