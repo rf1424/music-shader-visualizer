@@ -22,7 +22,7 @@ public class ImageEffect : MonoBehaviour
         float localT = t;
         float bpm = 58.0f;
         float offset = 0.6f;
-        // Debug.Log(t);
+        
 
         if (t < 75f) // intro
         {
@@ -51,6 +51,8 @@ public class ImageEffect : MonoBehaviour
             materialIndex = 4;
             localT = t - 162.5f;
         }
+
+        // Debug.Log(localT);
 
         material = materials[materialIndex];
 

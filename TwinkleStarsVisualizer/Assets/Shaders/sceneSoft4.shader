@@ -301,17 +301,59 @@ Shader "Unlit/sceneSoft4"
                 return finalSDF;
             }
 
+            float opSmoothUnionAkeep(float dA, float dB, float k)
+            {
+                float h = max(k - (dB - dA), 0.0) / k;
+                return min(dA, dB) - h*h*k*0.25;
+            }
 
+            // SPACIOUS DOMAIN REPETITION
+            float starFallSDF(float3 query, out int materialID)
+            {
+                float ret;
+                materialID = 0;
+                
+                // get query iD
+                float spacing = 5.;
+                float3 queryID = round(clamp(query.xyz, -5., +5) / spacing);
+                // query.xyz -= spacing * queryID;
+                
+                // grid based variations
+                
+                float r = random(queryID.x + (queryID.y + 0.1) * (queryID.z + 29.));
+                float2 r2 = float2(frac(r * 34.0), frac(r * 9.0));
+                query += 0.2 * float3(r, r2);
+                query.yz = mul(rot(queryID.x + TIME), query.yz);
+                
+                // transforms
+                query -= float3(0., -0.5, 0.);
+                query = rotateY(query, 2. * (sin(TIME * 4. + length(queryID))) * query.y);
+                
+                ret = starAnimalSDF2(query, materialID);
+                return ret;
+                
+            }
 
             float sceneSDF(float3 query, out int materialID, int sceneVer)
             {
+                
+                float d;
                 // query = query - 10. * round(query / 10.);
-
+                
                 query = rotateX(query, TIME * 0.3);
                 query = rotateY(query, TIME * 0.1);
                 materialID = 1;    
+                
                 // return sphereSDF(query, 0.4);
-                return kofSDF1(query, materialID);
+                float kof =  kofSDF1(query, materialID);
+                d = kof;
+                if (TIME > 16.5) {
+                    float stars = starFallSDF(query / 0.3, materialID);
+                    stars *= 0.3;
+                    d = min(stars, kof);
+                }
+                
+                return d;
             }
             
             float3 bgColor(float3 rayDir) {

@@ -390,9 +390,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   audioSource: {fileID: 421496379}
-  startTime: 130
-  loopStart: 133
-  loopEnd: 160
+  startTime: 100
+  loopStart: 100
+  loopEnd: 150
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
