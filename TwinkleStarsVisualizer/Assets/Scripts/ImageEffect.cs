@@ -20,6 +20,7 @@ public class ImageEffect : MonoBehaviour
     {
         float t = audioSource.time;
         float localT = t;
+        Debug.Log(t);
 
         if (t < 75f) // intro
         {
@@ -31,7 +32,7 @@ public class ImageEffect : MonoBehaviour
             materialIndex = 1;
             localT = t - 75f;
         }
-        else if (t < 133.8f) // soft
+        else if (t < 134.70f) // soft
         {
             materialIndex = 2;
             localT = t - 100f;

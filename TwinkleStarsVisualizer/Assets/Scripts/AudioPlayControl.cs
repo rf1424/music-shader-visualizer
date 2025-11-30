@@ -25,6 +25,6 @@ public class AudioPlayControl : MonoBehaviour
         {
             audioSource.time = loopStart;
         }
-    
+
     }
 }
