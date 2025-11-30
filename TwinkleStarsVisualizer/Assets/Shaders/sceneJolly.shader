@@ -87,6 +87,7 @@ Shader "Unlit/sceneJolly"
                 if (materialID == 0) albedo = float3(0.5, 0.5, 0.5);
                 else if (materialID == 1) albedo = float3(1., 0., 0.5);
                 else if (materialID == 2) albedo = float3(0.1, 0.05, 0.05);
+                else if (materialID == 6) albedo = float3(0.01, 0.15, 0.8);
                 else albedo = float3(0.5, 1., 0.5);
 
                 float3 col = float3(0.0, 0.0, 0.0);
@@ -120,7 +121,6 @@ Shader "Unlit/sceneJolly"
 
             float sceneSDF(float3 query, out int materialID, int sceneVer)
             {
-                return stardanceSDF0(query, materialID);
                 if (sceneVer == 0)
                 {
                     return stardanceSDF0(query, materialID);
@@ -146,14 +146,12 @@ Shader "Unlit/sceneJolly"
                 float3 EYEPOS = _CameraPos;
                 float3 REF = _CameraTarget;
                 int switchBt = (_intBeat / 4) % 4;
-                //float3 EYEPOS;
-                //float3 REF;
-                // cameraMove(EYEPOS, REF, switchBt);
+                
+                cameraMove(EYEPOS, REF, switchBt);
                 
                 float3 cameraForward = normalize(REF - EYEPOS);
                 float3 cameraRight = normalize(cross(cameraForward, WORLD_UP));
                 float3 cameraUp = normalize(cross(cameraRight, cameraForward));
-                
 
                 // get ray direction (note tan-1(fov/2) = 1 / len(REF - EYE))
                 // changing len(REF-EYE) will change focal length -> fov

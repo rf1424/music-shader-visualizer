@@ -20,6 +20,8 @@ public class ImageEffect : MonoBehaviour
     {
         float t = audioSource.time;
         float localT = t;
+        float bpm = 58.0f;
+        float offset = 0.6f;
         // Debug.Log(t);
 
         if (t < 75f) // intro
@@ -41,6 +43,8 @@ public class ImageEffect : MonoBehaviour
         {
             materialIndex = 3;
             localT = t - 133.8f;
+            bpm = 72.0f;
+            offset = 0f;
         }
         else // spinny
         {
@@ -49,7 +53,17 @@ public class ImageEffect : MonoBehaviour
         }
 
         material = materials[materialIndex];
+
         Shader.SetGlobalFloat("_time", localT);
+        // bpm
+        // float bpm = 58.0f;
+        float secPerBeat = 60.0f / bpm;
+        float beat = localT / secPerBeat + offset; // int + frac
+        int intBeat = (int)Mathf.Floor(beat); // integer beat count (increments every beat)
+        float fracBeat = beat - intBeat; // fractional phase of the beat (0 to 1)
+
+        Shader.SetGlobalInt("_intBeat", intBeat);
+        Shader.SetGlobalFloat("_fracBeat", fracBeat);
     }
 
 

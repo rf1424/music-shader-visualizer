@@ -96,13 +96,10 @@ public class MouseMove : MonoBehaviour
     void UpdateShaderUniforms()
     {
 
-        // Use SetGlobalVector instead of material-specific sets
+        
         Shader.SetGlobalVector("_CameraPos", cameraPosition);
         Shader.SetGlobalVector("_CameraTarget", targetPosition);
         
 
-        
-        // Optional: Also pass rotation for debugging
-        // Shader.SetGlobalVector("_CameraRotation", new Vector4(cameraRotation.x, cameraRotation.y, 0, 0));
     }
 }

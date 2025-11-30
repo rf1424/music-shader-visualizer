@@ -26,3 +26,13 @@ float3 squareVignette(float2 uv)
     return col;
 }
 
+// fractal stuff
+// float beatSum = _MeanLevels[4] + _MeanLevels[5];
+//                 beatSum = beatSum * 2000.;
+//                 beatSum = pow(beatSum, 0.4);
+//                 // float d = step(length(frac(uv * 2.)), beatSum);
+// float d = step(length(frac(uv * 2.)), beatSum);
+//                 // uv = scroll(uv, beatSum);
+//                 d = starChecker(uv, beatSum * 10.);
+// 
+// float3 bgColor = d * random3(_intBeat);

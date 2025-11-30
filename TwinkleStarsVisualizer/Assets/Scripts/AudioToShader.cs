@@ -28,15 +28,7 @@ public class AudioToShader : MonoBehaviour
         // Shader.SetGlobalFloat("_time", Time.time);
         
 
-        // bpm
-        float bpm = 58.0f;
-        float secPerBeat = 60.0f / bpm;
-        float beat = Time.time / secPerBeat + 0.6f; // int + frac
-        int intBeat = (int)Mathf.Floor(beat); // integer beat count (increments every beat)
-        float fracBeat = beat - intBeat; // fractional phase of the beat (0 to 1)
-
-        Shader.SetGlobalInt("_intBeat", intBeat);
-        Shader.SetGlobalFloat("_fracBeat", fracBeat);
+        
 
     }
 }

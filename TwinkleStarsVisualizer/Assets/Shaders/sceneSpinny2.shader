@@ -93,7 +93,8 @@ Shader "Unlit/sceneSpinny2"
                 if (materialID == 0) albedo = float3(0.5, 0.5, 0.5);
                 else if (materialID == 1) albedo = float3(1., 0., 0.5);
                 else if (materialID == 2) albedo = float3(0.1, 0.05, 0.05);
-                else if (materialID == 2) albedo = float3(0.5, 1., 0.5);
+                else if (materialID == 3) albedo = float3(0.5, 1., 0.5);
+
                 else { albedo = random3(nor.x + materialID); }
                 
 
@@ -192,7 +193,7 @@ Shader "Unlit/sceneSpinny2"
                 float d = min(starExtruded, starCreature);
 
                 if (starExtruded < starCreature) {
-                    materialID = queryID + 30;
+                    materialID = queryID + 50;
                 }
                 
                 return d;
@@ -270,8 +271,8 @@ Shader "Unlit/sceneSpinny2"
                 color += bloomColor * intersection.bloom * bloomIntensity;
 
                 // fog
-                //float s = smoothstep(1., 10., intersection.distance);
-                //color = lerp(color, bgcolor, s);
+                // float s = smoothstep(1., 10., intersection.distance);
+                // color = lerp(color, bgcolor, s);
                 
                 return color;
             }
@@ -334,24 +335,7 @@ Shader "Unlit/sceneSpinny2"
                 return o;
             }
 
-            float starRand(float2 uv, float freq) {
-               float2 uvRepeat = uv * 0.5 + 0.5;
-               float2 repeatID = floor(uvRepeat * freq);
-               uvRepeat = frac(uvRepeat * freq) * 2. - 1.;
-               
-               uv = uvRepeat;
-
-               // star outline
-               float d = 0.;
-               float seed = random(repeatID.x * freq * freq + repeatID.y * freq + floor(TIME * 6.));
-               if (seed < 0.2) {
-                   d = sdRoundedCross(uv / 0.5, 1.0);
-                   d = abs(d) - 0.01;
-                   d = 1. - smoothstep(0.0, 0.01, d / freq);
-                   d *= smoothstep(1., 0.95, length(uv));
-               }
-               return d;
-            }
+            
 
             fixed4 fragPass1(v2f i) : SV_Target
             {
@@ -365,6 +349,23 @@ Shader "Unlit/sceneSpinny2"
                float3 starOverlay = starRand(uv, freq) * float3(1., 1., 0.8);
 
                col = lerp(col, starOverlay, starOverlay.x * 0.3);
+
+
+               float scale = 1.;
+                uv = kofFractal3(uv, 3., scale);
+                uv /= scale;
+
+                float beatSum = _MeanLevels[4] + _MeanLevels[5];
+                beatSum = beatSum * 2000.;
+                beatSum = pow(beatSum, 0.4);
+                // float d = step(length(frac(uv * 2.)), beatSum);
+                float d = step(length(frac(uv * 2.)), beatSum);
+                uv = scroll(uv, beatSum);
+                d = starChecker(uv, 5.);
+
+                float3 bgColor = d * random3(_intBeat);
+
+                col = lerp(col, bgColor, d);
 
                return float4(col, 1);
             }

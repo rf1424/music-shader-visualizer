@@ -71,11 +71,11 @@ Shader "Unlit/sceneSuperJolly"
             float3 getSimpleShading(float3 nor, int materialID) {
                 Light lights[3];
 
-                lights[0].dir   = normalize(float3(10.0, 10.0, 15.0));
-                lights[0].color = float3(1.0, 1.0, 0.1) * 1.5;
+                lights[0].dir   = normalize(float3(-10.0, 15.0, 10.0));
+                lights[0].color = float3(1.0, 1.0, 1.0) * 1.;
                 
                 lights[1].dir   = float3(0.0, 1.0, 0.0);
-                lights[1].color = float3(0.7, 0.2, 0.7) * 0.5;
+                lights[1].color = float3(0.2, 0.8, 0.2) * 0.5;
                 
                 lights[2].dir   = normalize(-float3(15.0, 0.0, 10.0));
                 lights[2].color = float3(0.1, 0.3, 0.8) * 0.2;
@@ -83,11 +83,17 @@ Shader "Unlit/sceneSuperJolly"
                 
                 // TEMP
                 float3 albedo;
-                if (materialID == 0) albedo = float3(0.5, 0., 0.);
+                if (materialID == 0) albedo = float3(0.5, 0.5, 0.);
                 else if (materialID == 1) albedo = float3(1., 0., 0.5);
                 else if (materialID == 2) albedo = float3(0.1, 0.05, 0.05);
-                else albedo = float3(0.5, 1., 0.5);
-
+                // randomized star body color
+                else {
+                    float h = random(materialID * 0.001);
+                    albedo = hsv2rgb(float3(h, .9, 0.6));
+                    // albedo.b *= 0.1;
+                }
+                
+                // float3 col = albedo;
                 float3 col = float3(0.0, 0.0, 0.0);
                 for (int i = 0; i < 3; i++) {
                     col += albedo * lights[i].color * max(0., dot(nor, lights[i].dir));
@@ -101,38 +107,49 @@ Shader "Unlit/sceneSuperJolly"
                 REF = float3(0., 0., 0.);
                 // default
                 if (version == 0) {
-                    EYEPOS = float3(0.0, 1.5, 3.0);
+                    
+                    REF    = float3(0., -0.5, 0.);
+                    EYEPOS = float3(0.0, -0.6, 1.);
+                    
                 }
                 else if (version == 1) {
                     // spin
-                    EYEPOS = float3(1.6, 1.7, 1.9);
+                    EYEPOS = float3(-1.6 + sin(_fracBeat * 2.), 1., 1.9);
                 }
                 else if (version == 2) {
-                    // EYEPOS = float3(10., CTIME, 0.);
-                    // EYEPOS = float3(STIME, CTIME, 0.);
-                    EYEPOS = float3(0.65, 1.73, 2.36) + 0.1 * float3(STIME, CTIME, 0.);
+                    EYEPOS = float3(0.1, - 0.2, 5.);
+                    
                 }
-                else { // 2
-                     EYEPOS = float3(0.1, - 0.2, 5.);
+                else if (version == 3) { // 2
+                     // EYEPOS = float3(10., CTIME, 0.);
+                    // EYEPOS = float3(STIME, CTIME, 0.);
+                    EYEPOS = float3(0.65, 1., 2.36) + float3(sin(_fracBeat), cos(TIME * 2.), 0.);
+                } else {
+                    EYEPOS = float3(0.65, 1., 2.36) + float3(0., 0., - TIME * _fracBeat);
                 }
             }
 
             float sceneSDF(float3 query, out int materialID, int sceneVer)
             {
+
                 if (sceneVer == 0)
                 {
-                    return stardanceSDF0(query, materialID);
+                    return superStardanceSDF0(query, materialID);
                 }
                 else if (sceneVer == 1)
                 {
-                    return stardanceSDF1(query, materialID);
+                    return superStardanceSDF1(query, materialID);
                 }
                 else if (sceneVer == 2)
                 {
-                    return stardanceSDF2(query, materialID);
+                    return superStardanceSDF3(query, materialID);
+                    
+                }
+                else if (sceneVer == 3) {
+                    return superStardanceSDF2(query, materialID);
                 }
                 else {
-                    return stardanceSDF3(query, materialID);
+                    return superStardanceSDF4(query, materialID);
                 }
             
             }
@@ -143,7 +160,7 @@ Shader "Unlit/sceneSuperJolly"
                 // camera setup
                 float3 EYEPOS = _CameraPos;
                 float3 REF = _CameraTarget;
-                int switchBt = (_intBeat / 4) % 4;
+                int switchBt = (_intBeat / 4) % 5;
                 //float3 EYEPOS;
                 //float3 REF;
                 cameraMove(EYEPOS, REF, switchBt);
@@ -154,9 +171,11 @@ Shader "Unlit/sceneSuperJolly"
                 float3 cameraUp = normalize(cross(cameraRight, cameraForward));
                 
 
-                // get ray direction (note tan-1(fov/2) = 1 / len(REF - EYE))
-                // changing len(REF-EYE) will change focal length -> fov
-                float3 rayPoint = REF + cameraRight * uv.x + cameraUp * uv.y;
+                float fov = 45.0;
+                float3 rayPoint = EYEPOS 
+                + cameraForward
+                + cameraRight * uv.x * tan(radians(fov)/2)
+                + cameraUp    * uv.y * tan(radians(fov)/2);
                 float3 rayDir = normalize(rayPoint - EYEPOS);
 
                 Ray ray;
@@ -165,7 +184,25 @@ Shader "Unlit/sceneSuperJolly"
 
                 Intersection intersection = sdfRayMarch(ray, TIME, switchBt);
 
-                float3 color = float3(0.1, 0.1, 0.2);
+                // BG
+                // float scale = 1.;
+                // uv = kofFractal3(uv, 3., scale);
+                // uv /= scale;
+
+                // float beatSum = _MeanLevels[4] + _MeanLevels[5];
+                // beatSum = beatSum * 2000.;
+                // beatSum = pow(beatSum, 0.4);
+                // float d = step(length(frac(uv * 2.)), beatSum);
+                // uv = scroll(uv, beatSum);
+                // d = starChecker(uv, 3.);
+                // int odd = (int)floor(beatSum * 10.) & 1;
+                // uv = scroll(uv, float2(0., TIME * odd));
+                // d = starChecker(uv,3.);
+                // float3 bgColor = d * random3(_intBeat);
+
+                float3 bgColor = float3(random3(_intBeat));
+                float3 color = bgColor;
+
                 // float3 color = float3(1., 0.1, 0.5); PINK
 
                 if (intersection.hit && intersection.distance < 10000.) // TODO
@@ -173,6 +210,13 @@ Shader "Unlit/sceneSuperJolly"
                     
                     color = getSimpleShading(intersection.normal, intersection.materialID);
                 }
+
+                
+
+                // fog
+                float s = smoothstep(1., 50., intersection.distance);
+                color = lerp(color, bgColor, s);
+                
                 
                 return color;
             }

@@ -448,43 +448,9 @@ Shader "Unlit/sceneSoft4"
                 return o;
             }
 
-            float starChecker(float2 uv, float freq) {
-               float2 uvRepeat = uv * 0.5 + 0.5;
-               float2 repeatID = floor(uvRepeat * freq);
-               uvRepeat = frac(uvRepeat * freq) * 2. - 1.;
-               
-               uv = uvRepeat;
+            
 
-               // star outline
-               float d = 0.;
-               
-               if (abs(repeatID.x + repeatID.y) % 2 > 0) {
-                   d = sdRoundedCross(uv, 1.0);
-                   d = abs(d) - 0.01;
-                   d = 1. - smoothstep(0.0, 0.01, d / freq);
-                   d *= smoothstep(1., 0.95, length(uv));
-               }
-               return d;
-            }
-
-            float starRand(float2 uv, float freq) {
-               float2 uvRepeat = uv * 0.5 + 0.5;
-               float2 repeatID = floor(uvRepeat * freq);
-               uvRepeat = frac(uvRepeat * freq) * 2. - 1.;
-               
-               uv = uvRepeat;
-
-               // star outline
-               float d = 0.;
-               float seed = random(repeatID.x * freq * freq + repeatID.y * freq + floor(TIME * 6.));
-               if (seed < 0.2) {
-                   d = sdRoundedCross(uv / 0.5, 1.0);
-                   d = abs(d) - 0.01;
-                   d = 1. - smoothstep(0.0, 0.01, d / freq);
-                   d *= smoothstep(1., 0.95, length(uv));
-               }
-               return d;
-            }
+            
 
             fixed4 fragPass1(v2f i) : SV_Target
             {

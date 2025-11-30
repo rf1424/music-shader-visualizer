@@ -11,6 +11,11 @@
 #define YELLOW 0
 #define RED 1
 #define BROWN 2
+#define YELLOW1 3
+#define YELLOW2 4
+#define YELLOW3 5
+#define BLUE 6
+
 
 
 #define PI 3.14159265
@@ -57,6 +62,13 @@ float2 scroll(float2 uv, float2 speedXY)
     uv.x = frac((uv.x + ASPECT) / (2.0 * ASPECT)) * (2.0 * ASPECT) - ASPECT;
     uv.y = frac((uv.y + 1.0) / 2.0) * 2.0 - 1.0;
     return uv;
+}
+
+float3 hsv2rgb(float3 c)
+{
+    float4 K = float4(1., 2. / 3., 1. / 3., 3.);
+    float3 p = abs(frac(c.xxx + K.xyz) * 6. - K.www);
+    return c.z * lerp(K.xxx, saturate(p - K.xxx), c.y);
 }
 
 float random(float s)

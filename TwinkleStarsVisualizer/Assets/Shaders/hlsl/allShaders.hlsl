@@ -10,6 +10,6 @@
 
 // fun scenes made using above utilities and sdfs
 #include "compositeScenes.hlsl"
-// #include "postProcess.hlsl"
+#include "postProcess.hlsl"
 
 #endif
