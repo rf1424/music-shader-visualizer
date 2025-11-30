@@ -120,6 +120,7 @@ Shader "Unlit/sceneJolly"
 
             float sceneSDF(float3 query, out int materialID, int sceneVer)
             {
+                return stardanceSDF0(query, materialID);
                 if (sceneVer == 0)
                 {
                     return stardanceSDF0(query, materialID);
@@ -147,9 +148,8 @@ Shader "Unlit/sceneJolly"
                 int switchBt = (_intBeat / 4) % 4;
                 //float3 EYEPOS;
                 //float3 REF;
-                cameraMove(EYEPOS, REF, switchBt);
-
-                // EYEPOS = float3(0.1, - 0.2, 5.);//float3(100 * STIME, 10., 100 * CTIME);
+                // cameraMove(EYEPOS, REF, switchBt);
+                
                 float3 cameraForward = normalize(REF - EYEPOS);
                 float3 cameraRight = normalize(cross(cameraForward, WORLD_UP));
                 float3 cameraUp = normalize(cross(cameraRight, cameraForward));

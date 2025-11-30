@@ -236,6 +236,7 @@ float sunglassesSDF(float3 query, float scale)
     return d * scale;
 }
 
+
 float starCreatureSDF(float3 query, out int materialID)
 {
     materialID = 1.;
@@ -263,97 +264,6 @@ float starCreatureSDF(float3 query, out int materialID)
     materialID = d < sunglasses ? 1 : 0;
     
     return d;
-}
-
-
-
-float starAnimalSDF(float3 query, out int materialID)
-{
-    query -= float3(0., 0.5, 0.);
-    materialID = 0.;
-
-    // cone sdf
-    float3 scale = float3(1., 1., 0.5);
-    float3 bodyq = query / scale;
-    float angle = radians(30.0);
-    float h = 1.0;
-    float body = coneSDF(bodyq, float2(sin(angle), cos(angle)), h);
-
-
-    // arms
-    float3 leftArmQ = bodyq - float3(-0.6, -0.5, 0.);
-    float3 rightArmQ = bodyq - float3(0.6, -0.5, 0.);
-    leftArmQ = rotateZ(leftArmQ, radians(-75.0));
-    rightArmQ = rotateZ(rightArmQ, radians(75.0));
-    angle = radians(28.);
-    h = 0.4;
-    float leftArm = coneSDF(leftArmQ, float2(sin(angle), cos(angle)), h);
-    float rightArm = coneSDF(rightArmQ, float2(sin(angle), cos(angle)), h);
-    // combine
-    float arms = min(rightArm, leftArm);
- 
-    float smoothStar = smoothUnion(body, arms, 0.02);
-    smoothStar *= min(min(scale.x, scale.y), scale.z);
-    
-    // nose
-    float3 noseq = query - float3(0., -0.6, 0.);
-    noseq = rotateX(noseq, radians(-30));
-    noseq = rotateY(noseq, radians(45));
-    float nose = boxSDF(noseq, float3(0.1, 0.1, 0.1));
-
-    smoothStar = smoothUnion(smoothStar, nose, 0.2);
-    
-    // bottom
-    float sphere = sphereSDF(query - float3(0., -1.38, 0.), 0.5);
-    
-    smoothStar = smoothSubtract(sphere, smoothStar, 0.15);
-    
-    // eyes
-    scale = float3(1., 2., 0.7);
-    float3 eqR = query - float3(0.12, -0.5, 0.18);
-    eqR = rotateX(eqR, radians(20));
-    eqR /= scale;
-    float3 eqL = query - float3(-0.12, -0.5, 0.18);
-    eqL = rotateX(eqL, radians(20));
-    eqL /= scale;
-    
-    float eyeR = sphereSDF(eqR, 0.03);
-    float eyeL = sphereSDF(eqL, 0.03);
-    eyeR *= min(min(scale.x, scale.y), scale.z);
-    eqL *= min(min(scale.x, scale.y), scale.z);
-    float eye = min(eyeR, eyeL);
-    
-    if (eye < smoothStar)
-    {
-        materialID = 1;
-    }
-    
-    smoothStar = min(eye, smoothStar);
-    
-    // feet
-    scale = float3(.6, .35, 1.);
-    float3 fqR = query;
-    float3 fqL = query;
-    fqR = rotateY(fqR, radians(-15));
-    fqL = rotateY(fqL, radians(15));
-    fqR = fqR - float3(0.15, -1., 0.2);
-    fqL = fqL - float3(-0.15, -1., 0.2);
-    fqR /= scale;
-    fqL /= scale;
-    
-    float feetR = sphereSDF(fqR, 0.25);
-    float feetL = sphereSDF(fqL, 0.25);
-    float feet = min(feetR, feetL);
-    feet *= min(min(scale.x, scale.y), scale.z);
-    
-    if (feet < smoothStar)
-    {
-        materialID = 1;
-    }
-    smoothStar = min(feet, smoothStar);
-    
-    return smoothStar;
-    
 }
 
 float starAnimalSDF2(float3 q, out int materialID)
@@ -434,37 +344,12 @@ float starAnimalSDF2(float3 q, out int materialID)
     return smoothStar;
 }
 
-float axisCheckSDF(float3 query, out int materialID)
-{
-    float3 q1 = query;
-    float box1 = boxSDF(q1, 0.1);
-    
-    float3 q2 = query - float3(0., 0.5, 0.);
-    float box2 = boxSDF(q2, 0.1);
-    
-    float3 q4 = query - float3(0.5, 0., 0.);
-    float box4 = coneSDF(q4, 0.1, 0.1);
-    
-    float3 q5 = query - float3(0., 0., -0.3);
-    float box5 = sphereSDF(q5, 0.1);
-    
-    float d = min(box4, min(box1, box2));
-    // d = min(d, box5);
 
-    materialID = 0;
-    if (box5 < d)
-    {
-        materialID = 1;
-        d = box5;
-    }
-        return d;
-    }
-
-// DEFAULT BEND
+// DEFAULT BEND --------------------------------------------------------------------------------
 float stardanceSDF0(float3 query, out int materialID)
 {
     float ret;
-    materialID = 0;
+    materialID = YELLOW;
     
     query -= float3(0., -0.5, 0.);
     query = bendPoint(query, sin(TIME * 3.));
@@ -472,14 +357,10 @@ float stardanceSDF0(float3 query, out int materialID)
     float3 scale = float3(1., STIME * .01 + 1., 1.);
     query /= scale;
     
-    // sdfs
-    float sunglasses = sunglassesSDF(query - float3(0.,0.47, 0.23), 0.5);
+    
     float star2 = starAnimalSDF2(query, materialID);
     
-    // material
-    materialID = star2 < sunglasses ? materialID : RED;
-
-    ret = min(star2, sunglasses);
+    ret = star2;
     ret *= min(min(scale.x, scale.y), scale.z);
     
     return ret;
@@ -489,7 +370,7 @@ float stardanceSDF0(float3 query, out int materialID)
 float stardanceSDF1(float3 query, out int materialID)
 {
     float ret;
-    materialID = 0;
+    materialID = YELLOW;
     
     // slide forward
     query.z -= TIME * 0.5 + 5.;
@@ -500,10 +381,8 @@ float stardanceSDF1(float3 query, out int materialID)
     query -= float3(0., -0.5, 0.);
     
     // transforms
-    
     query -= float3(0., -0.5, 0.);
     query = rotateY(query, 2. * (sin(TIME * 4.)) * query.y);
-    
     
     float3 scale = float3(1., STIME * .01 + 1., 1.);
     query /= scale;
@@ -511,25 +390,17 @@ float stardanceSDF1(float3 query, out int materialID)
     // sdfs
     float star2 = starAnimalSDF2(query, materialID);
     ret = star2;
-    bool isOdd = (queryID & 1) != 0;
-    if (isOdd)
-    {
-        float sunglasses = sunglassesSDF(query - float3(0., 0.47, 0.23), 0.5);
-        // material
-        materialID = star2 < sunglasses ? materialID : RED;
-        ret = min(star2, sunglasses);
-    }
         
     ret *= min(min(scale.x, scale.y), scale.z);
     
     return ret;
 }
 
+// SPACIOUS DOMAIN REPETITION
 float stardanceSDF2(float3 query, out int materialID)
 {
     float ret;
     materialID = 0;
-    // query.z -= TIME * 0.5 + 5.;
     
     // get query iD
     float spacing = 3.;
@@ -546,29 +417,15 @@ float stardanceSDF2(float3 query, out int materialID)
     // transforms
     query -= float3(0., -0.5, 0.);
     query = rotateY(query, 2. * (sin(TIME * 4. + length(queryID))) * query.y);
-  
     
-    // sdfs
-    float sunglasses = sunglassesSDF(query - float3(0., 0.5, 0.23), 0.5);
-    float star2 = starAnimalSDF2(query, materialID);
+    return starAnimalSDF2(query, materialID);
     
-    // material
-    materialID = star2 < sunglasses ? materialID : RED;
-
-    ret = min(star2, sunglasses);
-  
-    return ret;
 }
 
 float stardanceSDF3(float3 query, out int materialID)
 {
     float ret;
     materialID = 0;
-    
-    // slide forward
-    // query.z -= TIME * 0.5 + 5.;
-    
-    // domain repeat along z
     
     int queryID = round(query.x / 1.5);
     query.x = query.x - 1.5 * round(query.x / 1.5);
@@ -609,6 +466,159 @@ float stardanceSDF3(float3 query, out int materialID)
     
     return ret;
 }
+
+// ----------------------------------------------------------------------------------------------
+
+// DEFAULT BEND
+float superStardanceSDF0(float3 query, out int materialID)
+{
+    float ret;
+    materialID = 0;
+    
+    query -= float3(0., -0.5, 0.);
+    query = bendPoint(query, sin(TIME * 3.));
+    
+    float3 scale = float3(1., STIME * .01 + 1., 1.);
+    query /= scale;
+    
+    // sdfs
+    float sunglasses = sunglassesSDF(query - float3(0., 0.47, 0.23), 0.5);
+    float star2 = starAnimalSDF2(query, materialID);
+    
+    // material
+    materialID = star2 < sunglasses ? materialID : RED;
+
+    ret = min(star2, sunglasses);
+    ret *= min(min(scale.x, scale.y), scale.z);
+    
+    return ret;
+}
+
+// ROTATE AND WALK
+float superStardanceSDF1(float3 query, out int materialID)
+{
+    float ret;
+    materialID = 0;
+    
+    // slide forward
+    query.z -= TIME * 0.5 + 5.;
+    
+    // domain repeat along z
+    int queryID = round(query.z / 1.2);
+    query.z = query.z - 1.2 * round(query.z / 1.2);
+    query -= float3(0., -0.5, 0.);
+    
+    // transforms
+    
+    query -= float3(0., -0.5, 0.);
+    query = rotateY(query, 2. * (sin(TIME * 4.)) * query.y);
+    
+    
+    float3 scale = float3(1., STIME * .01 + 1., 1.);
+    query /= scale;
+    
+    // sdfs
+    float star2 = starAnimalSDF2(query, materialID);
+    ret = star2;
+    bool isOdd = (queryID & 1) != 0;
+    if (isOdd)
+    {
+        float sunglasses = sunglassesSDF(query - float3(0., 0.47, 0.23), 0.5);
+        // material
+        materialID = star2 < sunglasses ? materialID : RED;
+        ret = min(star2, sunglasses);
+    }
+        
+    ret *= min(min(scale.x, scale.y), scale.z);
+    
+    return ret;
+}
+
+float superStardanceSDF2(float3 query, out int materialID)
+{
+    float ret;
+    materialID = 0;
+    // query.z -= TIME * 0.5 + 5.;
+    
+    // get query iD
+    float spacing = 3.;
+    float3 queryID = round(clamp(query.xyz, -10., +10.) / spacing);
+    query.xyz -= spacing * queryID;
+    
+    // grid based variations
+    
+    float r = random(queryID.x + (queryID.y + 0.1) * (queryID.z + 29.));
+    float2 r2 = float2(frac(r * 34.0), frac(r * 9.0));
+    query += 0.2 * float3(r, r2);
+    query.yz = mul(rot(queryID.x + TIME), query.yz);
+    
+    // transforms
+    query -= float3(0., -0.5, 0.);
+    query = rotateY(query, 2. * (sin(TIME * 4. + length(queryID))) * query.y);
+  
+    
+    // sdfs
+    float sunglasses = sunglassesSDF(query - float3(0., 0.5, 0.23), 0.5);
+    float star2 = starAnimalSDF2(query, materialID);
+    
+    // material
+    materialID = star2 < sunglasses ? materialID : RED;
+
+    ret = min(star2, sunglasses);
+  
+    return ret;
+}
+
+float superStardanceSDF3(float3 query, out int materialID)
+{
+    float ret;
+    materialID = 0;
+    
+    // slide forward
+    // query.z -= TIME * 0.5 + 5.;
+    
+    // domain repeat along z
+    
+    int queryID = round(query.x / 1.5);
+    query.x = query.x - 1.5 * round(query.x / 1.5);
+    
+    query -= float3(0., -1.5, -10.);
+    
+    float3 scale = float3(1., 1., 1.);
+    
+    int offsetID = queryID + 3;
+    if (offsetID < 8 & offsetID > 0)
+    {
+        // float h = _MeanLevels[(int)offsetID] * 30. + 0.8;
+        // scale.y = h;
+        float h = _PeakLevels[(int) offsetID] * 30.;
+        float h2 = _MeanLevels[(int) offsetID] * 30.;
+        
+        // h = smoothstep(0.1, 4., h);
+        // h2 = smoothstep(0.1, 4., h2);
+        query.y -= h2;
+        query = rotateY(query, h2 * 1.);
+    }
+    
+    query /= scale;
+    
+    // sdfs
+    float star2 = starAnimalSDF2(query, materialID);
+    ret = star2;
+    bool isOdd = (queryID & 1) != 0;
+    if (isOdd)
+    {
+        float sunglasses = sunglassesSDF(query - float3(0., 0.47, 0.23), 0.5);
+        // material
+        materialID = star2 < sunglasses ? materialID : RED;
+        ret = min(star2, sunglasses);
+    }
+        
+    ret *= min(min(scale.x, scale.y), scale.z);
+    
+    return ret;
+}
+// ----------------------------------------------------------------------------------------------
 
 float starTunnelSDF2(float3 query, out int materialID)
 { 

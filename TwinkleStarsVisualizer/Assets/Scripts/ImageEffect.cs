@@ -20,7 +20,7 @@ public class ImageEffect : MonoBehaviour
     {
         float t = audioSource.time;
         float localT = t;
-        Debug.Log(t);
+        // Debug.Log(t);
 
         if (t < 75f) // intro
         {
