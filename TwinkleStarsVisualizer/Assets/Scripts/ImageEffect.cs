@@ -58,7 +58,7 @@ public class ImageEffect : MonoBehaviour
             localT = t - 200.0f;
         }
 
-        // Debug.Log(localT);
+        Debug.Log(localT);
 
         material = materials[materialIndex];
 

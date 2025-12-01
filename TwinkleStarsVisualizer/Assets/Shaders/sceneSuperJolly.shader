@@ -188,22 +188,6 @@ Shader "Unlit/sceneSuperJolly"
 
                 Intersection intersection = sdfRayMarch(ray, TIME, switchBt);
 
-                // BG
-                // float scale = 1.;
-                // uv = kofFractal3(uv, 3., scale);
-                // uv /= scale;
-
-                // float beatSum = _MeanLevels[4] + _MeanLevels[5];
-                // beatSum = beatSum * 2000.;
-                // beatSum = pow(beatSum, 0.4);
-                // float d = step(length(frac(uv * 2.)), beatSum);
-                // uv = scroll(uv, beatSum);
-                // d = starChecker(uv, 3.);
-                // int odd = (int)floor(beatSum * 10.) & 1;
-                // uv = scroll(uv, float2(0., TIME * odd));
-                // d = starChecker(uv,3.);
-                // float3 bgColor = d * random3(_intBeat);
-
                 float3 bgColor = float3(random3(_intBeat));
                 float3 color = bgColor;
 
@@ -230,33 +214,15 @@ Shader "Unlit/sceneSuperJolly"
                 float2 uv = i.uv * 2 - 1;
                 float AR = _ScreenParams.x / _ScreenParams.y;
                 uv.x *= AR;
-                // uv.y = -uv.y;
-                
-                // uv = uvOffset(uv);
-
-                // uv.x = remapRepeat(uv.x, 2.);
-                // baseCol
+               
                 fixed3 col = float3(0., 0., 0.);
 
                 col = random3(_intBeat);
 
-                // USEFUL?
-                // col.g = random(_highestBeat4);
-                float radius = _PeakLevels[2] * 10.;
-                float circle = step(length(uv), radius);
-                col.r += circle; 
                 
-                float3 squareVignetteCol = squareVignette(uv);
-                col += squareVignetteCol;
-
-                
-
                 // raymarch
                 col = shootRays(uv);               
 
-                // col *= 1. - vin * 0.4;
-                
-                // col = voronoiFilter(uv, col);
                 return float4(col, 1.);
             }
             ENDCG
@@ -275,6 +241,19 @@ Shader "Unlit/sceneSuperJolly"
             #pragma fragment fragPass1
             #include "UnityCG.cginc"
 
+            float _Levels[8];
+            float _PeakLevels[8];
+            float _MeanLevels[8];
+            float _highestBeat4; /// simply tracks current peakLevel max for 2
+            float _time;
+            int _intBeat; // float _intBeat;
+            float _fracBeat;
+            
+
+            float3 _CameraPos;
+            float3 _CameraTarget;
+           
+            #include "hlsl/allShaders.hlsl"   
             sampler2D _MainTex; // rtA
 
             struct appdata
@@ -297,10 +276,37 @@ Shader "Unlit/sceneSuperJolly"
                 return o;
             }
 
+            float3 hatch(float2 uv)
+            {
+                
+                float3 imgColor = tex2D(_MainTex, uv).rgb;
+            
+                float lum = brightness(imgColor);
+            
+                float uLineThickness = 1.0;
+            
+                float scale = 500.0 * uLineThickness / _ScreenParams.y;
+            
+                float hatchValue;
+            
+                
+                if (lum < 0.2) hatchValue = sampleHatchingPattern(uv * _ScreenParams.xy, scale * 4.0);
+                else if (lum < 0.4) hatchValue = sampleHatchingPattern(uv * _ScreenParams.xy, scale * 3.0);
+                else if (lum < 0.6) hatchValue = sampleHatchingPattern(uv * _ScreenParams.xy, scale * 2.0);
+                else if (lum < 0.8) hatchValue = sampleHatchingPattern(uv * _ScreenParams.xy, scale * 1.0);
+                else hatchValue = 1.0;
+                
+            
+                return hatchValue;
+            }
+
+
             fixed4 fragPass1(v2f i) : SV_Target
             {
                 float3 col = tex2D(_MainTex, i.uv).rgb;
 
+                float h = hatch(i.uv);
+                col *= h;
                 // col = 1. - col;
                 return float4(col, 1);
             }

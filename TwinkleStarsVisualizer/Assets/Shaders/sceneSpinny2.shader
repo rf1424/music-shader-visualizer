@@ -9,20 +9,11 @@ Shader "Unlit/sceneSpinny2"
     {
         Tags { 
             "RenderType"="Opaque"
-            // "RenderType"="Overlay" 
-            // "Queue"="Overlay" 
-            // "IgnoreProjector"="True"
-            // "ForceNoShadowCasting"="True"
         }
         LOD 100
 
         Pass
         {
-            // ZTest Always
-            // ZWrite Off
-            // Cull Off
-            // Blend Off
-            
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
@@ -98,11 +89,12 @@ Shader "Unlit/sceneSpinny2"
                 else { albedo = random3(nor.x + materialID); }
                 
 
-                float3 col = float3(0.0, 0.0, 0.0);
-                for (int i = 0; i < 3; i++) {
-                    col += albedo * lights[i].color * max(0., dot(nor, lights[i].dir));
-                }
-                 
+                // float3 col = float3(0.0, 0.0, 0.0);
+                // for (int i = 0; i < 3; i++) {
+                //     col += albedo * lights[i].color * max(0., dot(nor, lights[i].dir));
+                // }
+                float3 col = albedo;
+
                 col = pow(col, 1.0 / 2.2);
                 return col;
             }
@@ -206,6 +198,14 @@ Shader "Unlit/sceneSpinny2"
                 return starTunnelSDF4(query, materialID);
             }
 
+            float Lerp3(float a, float b, float c, float t)
+            {
+                if (t < 0.5)
+                    return lerp(a, b, t * 2.0);
+                else
+                    return lerp(b, c, (t - 0.5) * 2.0);
+            }
+
             float3 shootRays(float2 uv)
             {
                 // camera setup
@@ -238,12 +238,17 @@ Shader "Unlit/sceneSpinny2"
 
                 REF = EYEPOS - float3(0., 0., 1.);// // EYEPOS - float3(0., 0., 1.);
                 REF = float3(0., 0., limitPos + 1.);
-                // REF = float3(0., 0., -10.);
+                
+                // turn camera
+                // if (TIME > 22.) {
+                //     float refLerp = Lerp3(0., 1., 0., clamp(TIME - 22., 0., 1.)) * 20.;
+                //     // turns again at - limitPos / 2.
+                //     REF = float3(0., refLerp, - limitPos / 2.);
+                // }
 
                 float3 cameraForward = normalize(REF - EYEPOS);
                 float3 cameraRight = normalize(cross(cameraForward, WORLD_UP));
                 float3 cameraUp = normalize(cross(cameraRight, cameraForward));
-                
 
                 float fov = 45.0;
                 float3 rayPoint = EYEPOS 
@@ -273,7 +278,7 @@ Shader "Unlit/sceneSpinny2"
                 color += bloomColor * intersection.bloom * bloomIntensity;
 
                 // fog
-                // float s = smoothstep(1., 10., intersection.distance);
+                // float s = smoothstep(1., 20., intersection.distance);
                 // color = lerp(color, bgcolor, s);
                 
                 return color;

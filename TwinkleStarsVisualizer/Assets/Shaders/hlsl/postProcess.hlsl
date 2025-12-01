@@ -1,4 +1,15 @@
+float sampleHatchingPattern(float2 uv, float scale)
+{
+    float line1 = sin((uv.x + uv.y) * scale);
+    float line2 = sin((uv.x - uv.y) * scale);
+    return max(line1, line2);
+}
 
+// lum
+float brightness(float3 color)
+{
+    return dot(color, float3(0.2126, 0.7152, 0.0722));
+}
 
 
 float2 uvOffset(float2 uv)
