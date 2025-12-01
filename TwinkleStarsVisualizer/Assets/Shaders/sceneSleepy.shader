@@ -113,7 +113,7 @@ Shader "Unlit/sceneSleepy"
                 query = rotateX(query, radians(-28.));
                 float starCreature = starAnimalSDF2(query - float3(0., -0.5, 0.), materialID);
 
-                float t = (TIME - 40.5)/ 30.;
+                float t = (TIME)/ 25.;
                 t = min(t, 1.);
                 return lerp(starThick, starCreature, t);
 ;                
@@ -125,7 +125,7 @@ Shader "Unlit/sceneSleepy"
                 // camera setup
                 float3 EYEPOS = _CameraPos;
                 float3 REF = _CameraTarget;
-                int switchBt = ((_intBeat - 1) / 4) % 5;
+                int switchBt = 0;
                 //float3 EYEPOS;
                 //float3 REF;
                 cameraMove(EYEPOS, REF, switchBt);
@@ -170,7 +170,7 @@ Shader "Unlit/sceneSleepy"
                 float AR = _ScreenParams.x / _ScreenParams.y;
                 uv.x *= AR;
 
-                uv = rotate2d(uv, TIME * 0.5 + 0.23);
+                uv = rotate2d(uv, TIME * 0.5 - 1.4);
                 fixed3 col = float3(0., 0., 0.);
 
                 col = random3(_intBeat);
@@ -271,6 +271,7 @@ Shader "Unlit/sceneSleepy"
                 col = EdgeCrossFilter(i.uv);
                 col = min(0.99, col);
 
+                // col = random3(_intBeat);
                 return float4(col, 1);
             }
 

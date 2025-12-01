@@ -5,11 +5,11 @@ using UnityEngine;
 public class AudioPlayControl : MonoBehaviour
 {
     public AudioSource audioSource;
-    public float startTime = 0f;
+    public float startTime = 46.8f;
 
 
-    public float loopStart = 163f;
-    public float loopEnd = 200f;
+    public float loopStart = 46.8f;
+    public float loopEnd = 229f;
     // Start is called before the first frame update
     void Start()
     {

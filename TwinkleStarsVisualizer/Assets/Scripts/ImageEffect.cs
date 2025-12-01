@@ -27,12 +27,14 @@ public class ImageEffect : MonoBehaviour
         if (t < 75f) // intro
         {
             materialIndex = 0;
-            localT = t - 0f;
+            localT = t - 46.8f;
+            offset = 0.4f;
         }
         else if (t < 100f) // jolly
         {
             materialIndex = 1;
             localT = t - 75f;
+            offset = 0;
         }
         else if (t < 134.70f) // soft
         {

@@ -106,13 +106,10 @@ Shader "Unlit/sceneJolly"
                     EYEPOS = float3(0.0, 1.5, 3.0);
                 }
                 else if (version == 1) {
-                    // spin
-                    EYEPOS = float3(1.6, 1.7, 1.9);
+                    EYEPOS = float3(0.65, 1.73, 2.36) + 0.1 * float3(STIME, CTIME, 0.);
                 }
                 else if (version == 2) {
-                    // EYEPOS = float3(10., CTIME, 0.);
-                    // EYEPOS = float3(STIME, CTIME, 0.);
-                    EYEPOS = float3(0.65, 1.73, 2.36) + 0.1 * float3(STIME, CTIME, 0.);
+                    EYEPOS = float3(1.6, 1.7, 1.9);
                 }
                 else { // 2
                      EYEPOS = float3(0.1, - 0.2, 5.);
@@ -127,11 +124,12 @@ Shader "Unlit/sceneJolly"
                 }
                 else if (sceneVer == 1)
                 {
-                    return stardanceSDF1(query, materialID);
+                    return stardanceSDF2(query, materialID);
                 }
                 else if (sceneVer == 2)
                 {
-                    return stardanceSDF2(query, materialID);
+                    return stardanceSDF1(query, materialID);
+                    
                 }
                 else {
                     return stardanceSDF3(query, materialID);
