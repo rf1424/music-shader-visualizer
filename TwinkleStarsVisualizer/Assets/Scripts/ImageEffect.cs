@@ -30,23 +30,23 @@ public class ImageEffect : MonoBehaviour
             localT = t - 46.8f;
             offset = 0.4f;
         }
-        else if (t < 100f) // jolly
+        else if (t < 99.75f) // jolly
         {
             materialIndex = 1;
             localT = t - 75f;
-            offset = 0;
+            offset = 0.0f;
         }
-        else if (t < 134.70f) // soft
+        else if (t < 134.7f) // soft
         {
             materialIndex = 2;
-            localT = t - 100f;
+            localT = t - 99.75f;
         }
         else if (t < 162.5f) // superjolly
         {
             materialIndex = 3;
             localT = t - 133.8f;
             bpm = 72.0f;
-            offset = 0f;
+            offset = 0.2f;
         }
         else if (t < 200.0f)// spinny
         {
@@ -58,7 +58,7 @@ public class ImageEffect : MonoBehaviour
             localT = t - 200.0f;
         }
 
-        // Debug.Log(t);
+        // Debug.Log(localT);
 
         material = materials[materialIndex];
 

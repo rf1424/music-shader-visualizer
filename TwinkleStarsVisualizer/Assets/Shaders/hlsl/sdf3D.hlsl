@@ -453,6 +453,26 @@ float stardanceSDF0(float3 query, out int materialID)
     return ret;
 }
 
+float stardanceSDF0Fast(float3 query, out int materialID)
+{
+    float ret;
+    materialID = YELLOW;
+    
+    query -= float3(0., -0.5, 0.);
+    query = bendPoint(query, sin(TIME * 3.2));
+    
+    float3 scale = float3(1., STIME * .01 + 1., 1.);
+    query /= scale;
+    
+    
+    float star2 = starAnimalSDF2(query, materialID);
+    
+    ret = star2;
+    ret *= min(min(scale.x, scale.y), scale.z);
+    
+    return ret;
+}
+
 // ROTATE AND WALK
 float stardanceSDF1(float3 query, out int materialID)
 {
@@ -550,10 +570,31 @@ float stardanceSDF3(float3 query, out int materialID)
     return ret;
 }
 
+
+// SPACIOUS DOMAIN REPETITION
+float stardanceSDF4(float3 query, out int materialID)
+{
+    float ret;
+    materialID = 0;
+    
+    // get query iD
+    float spacing = 3.;
+    float3 queryID = round(clamp(query.xyz, -10., +10.) / spacing);
+    query.x = abs(query.x) - 0.8;
+    
+    
+    
+    // transforms
+    query -= float3(0., -0.5, 0.);
+    query = rotateX(query, 1. * (sin(TIME * 6.2 )) * (query.y - 0.2));
+    
+    ret = starAnimalSDF2(query, materialID);
+    return ret;
+    
+}
 // ----------------------------------------------------------------------------------------------
 // SUPER STAR (WITH SUNGLASSES)
 
-// DEFAULT BEND
 float superStardanceSDF0(float3 query, out int materialID)
 {
     float ret;

@@ -106,13 +106,14 @@ Shader "Unlit/sceneJolly"
                     EYEPOS = float3(0.0, 1.5, 3.0);
                 }
                 else if (version == 1) {
-                    EYEPOS = float3(0.65, 1.73, 2.36) + 0.1 * float3(STIME, CTIME, 0.);
+                    EYEPOS = float3(0.14, -1.43, 2.40);
                 }
                 else if (version == 2) {
                     EYEPOS = float3(1.6, 1.7, 1.9);
                 }
                 else { // 2
-                     EYEPOS = float3(0.1, - 0.2, 5.);
+                     //EYEPOS = float3(0.1, - 0.2, 5.);
+                     EYEPOS = float3(-0.17, 0.31, 12.19) + float3(STIME, 0., 0.);
                 }
             }
 
@@ -120,11 +121,11 @@ Shader "Unlit/sceneJolly"
             {
                 if (sceneVer == 0)
                 {
-                    return stardanceSDF0(query, materialID);
+                    return stardanceSDF0Fast(query, materialID);
                 }
                 else if (sceneVer == 1)
                 {
-                    return stardanceSDF2(query, materialID);
+                    return stardanceSDF4(query, materialID);
                 }
                 else if (sceneVer == 2)
                 {
@@ -143,7 +144,7 @@ Shader "Unlit/sceneJolly"
                 // camera setup
                 float3 EYEPOS = _CameraPos;
                 float3 REF = _CameraTarget;
-                int switchBt = (_intBeat / 4) % 4;
+                int switchBt = ((_intBeat) / 4) % 4;
                 
                 cameraMove(EYEPOS, REF, switchBt);
                 

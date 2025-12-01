@@ -113,19 +113,22 @@ Shader "Unlit/sceneSuperJolly"
                     
                 }
                 else if (version == 1) {
-                    // spin
-                    EYEPOS = float3(-1.6 + sin(_fracBeat * 2.), 1., 1.9);
+                    float f = fmod(_fracBeat, 1.) * 2.5;
+                    EYEPOS = float3(-1.6 + sin(f), 1., 1.9);
                 }
                 else if (version == 2) {
-                    EYEPOS = float3(0.1, - 0.2, 5.);
+                    EYEPOS = float3(0.1, - 0.2, 0.) + float3(0., 0., TIME * 0.1);
                     
                 }
-                else if (version == 3) { // 2
-                     // EYEPOS = float3(10., CTIME, 0.);
-                    // EYEPOS = float3(STIME, CTIME, 0.);
+                else if (version == 3) {
                     EYEPOS = float3(0.65, 1., 2.36) + float3(sin(_fracBeat), cos(TIME * 2.), 0.);
-                } else {
-                    EYEPOS = float3(0.65, 1., 2.36) + float3(0., 0., - TIME * _fracBeat);
+                } else if (version == 4) {
+                    float f = fmod(_fracBeat - 0.2, 1.);
+                    EYEPOS = float3(0.65, 1., 2.36) + float3(0., 0., - TIME * f);
+                }
+                else {
+                    float f = fmod(_fracBeat - 0.2, 1.);
+                    EYEPOS = float3(0.65, 1., 2.36) - float3(0., - TIME * f, -TIME);
                 }
             }
 
@@ -161,6 +164,7 @@ Shader "Unlit/sceneSuperJolly"
                 float3 EYEPOS = _CameraPos;
                 float3 REF = _CameraTarget;
                 int switchBt = ((_intBeat - 1) / 4) % 5;
+                if (switchBt==0 && (_intBeat - 1) / 4 !=0) switchBt = 4;
                 //float3 EYEPOS;
                 //float3 REF;
                 cameraMove(EYEPOS, REF, switchBt);

@@ -134,13 +134,11 @@ Shader "Unlit/sceneSoft4"
                 float metalness;
                 float roughness;
             
-                materialID = 1;
-                if (materialID == 0) { metalColor=float3(1.0,0.8,0.3); metalness=1.; roughness=0.15; }
-                else if (materialID == 1) { metalColor=float3(1.0,0.2,0.6); metalness=1.; roughness=0.2; }
-                else if (materialID == 2) { metalColor=float3(0.2,0.05,0.05); metalness=1.; roughness=0.3; }
-                else { metalColor=float3(0.8,0.9,1.0); metalness=0.; roughness=0.5; } // default
-            
                
+                metalColor = float3(1.0,0.2,0.6); 
+                metalness = 1.; 
+                roughness = 0.2;
+                           
                 float3 diffuseColor = lerp(float3(0.01,0.01,0.01), metalColor * 0.05, 1.0 - metalness);  
                 float3 specColor = lerp(float3(1.0,1.0,1.0), metalColor, metalness);
                 float shininess = lerp(256.0, 8.0, roughness);
@@ -198,13 +196,8 @@ Shader "Unlit/sceneSoft4"
                 float ret;
                 materialID = 0;
                 
-                // get query iD
-                float spacing = 5.;
-                float3 queryID = round(clamp(query.xyz, -5., +5) / spacing);
-                // query.xyz -= spacing * queryID;
-                
                 // grid based variations
-                
+                float3 queryID = 0;
                 float r = random(queryID.x + (queryID.y + 0.1) * (queryID.z + 29.));
                 float2 r2 = float2(frac(r * 34.0), frac(r * 9.0));
                 query += 0.2 * float3(r, r2);
@@ -212,7 +205,7 @@ Shader "Unlit/sceneSoft4"
                 
                 // transforms
                 query -= float3(0., -0.5, 0.);
-                query = rotateY(query, 2. * (sin(TIME * 4. + length(queryID))) * query.y);
+                query = rotateY(query, 2. * (sin(TIME * 4.)) * query.y);
                 
                 ret = starAnimalSDF2(query, materialID);
                 return ret;
@@ -235,7 +228,9 @@ Shader "Unlit/sceneSoft4"
                 if (TIME > 16.5) {
                     float stars = starFallSDF(query / 0.3, materialID);
                     stars *= 0.3;
+                    // if (stars < kof) materialID = 2;
                     d = min(stars, kof);
+                    
                 }
                 
                 return d;
@@ -312,19 +307,11 @@ Shader "Unlit/sceneSoft4"
                 float2 uv = i.uv * 2 - 1;
                 float AR = _ScreenParams.x / _ScreenParams.y;
                 uv.x *= AR;
-                // uv.y = -uv.y;
-
-                // rotate
-                // uv = rotate2d(uv, TIME);
 
                 float3 col = float3(0., 0., 0.);
-                float scale;
-                
                 
                 col = shootRays(uv);
 
-                
-                // col += kofFractal(uv, 1, scale).y * 0.5;
                 return float4(col, 1.);
             }
             ENDCG
@@ -374,10 +361,6 @@ Shader "Unlit/sceneSoft4"
                 o.uv = v.uv;
                 return o;
             }
-
-            
-
-            
 
             fixed4 fragPass1(v2f i) : SV_Target
             {
