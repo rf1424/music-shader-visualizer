@@ -758,6 +758,56 @@ float superStardanceSDF3(float3 query, out int materialID)
     
     return ret;
 }
+
+// audio reactive with many layers
+float superStardanceSDF5(float3 query, out int materialID)
+{
+    float ret;
+    materialID = 0;
+    
+    
+    int queryID = round(query.x / 1.5);
+    query.x = query.x - 1.5 * round(query.x / 1.5);
+    query.y = query.y - 1.5 * round(query.y / 1.5);
+    
+    query -= float3(0., -1.5, -10.);
+    
+    float3 scale = float3(1., 1., 1.);
+    
+    int offsetID = queryID + 3;
+    int sign = 1 - 2 * (offsetID & 1);
+    if (offsetID < 8 & offsetID > 0)
+    {
+        // float h = _MeanLevels[(int)offsetID] * 30. + 0.8;
+        // scale.y = h;
+        float h = _PeakLevels[(int) offsetID] * 30.;
+        float h2 = _MeanLevels[(int) offsetID] * 30.;
+        
+        // h = smoothstep(0.1, 4., h);
+        // h2 = smoothstep(0.1, 4., h2);
+        query.y -= h2;
+        query = rotateY(query, h * sign);
+    }
+    
+    query /= scale;
+    
+    // sdfs
+    float star2 = starAnimalSDF2(query, materialID);
+    ret = star2;
+    bool isOdd = (queryID & 1) != 0;
+    if (isOdd)
+    {
+        float sunglasses = sunglassesSDF(query - float3(0., 0.47, 0.23), 0.5);
+        // material
+        materialID = star2 < sunglasses ? materialID : RED;
+        ret = min(star2, sunglasses);
+    }
+        
+    ret *= min(min(scale.x, scale.y), scale.z);
+    
+    return ret;
+}
+
 // ----------------------------------------------------------------------------------------------
 
 float starTunnelSDF2(float3 query, out int materialID)

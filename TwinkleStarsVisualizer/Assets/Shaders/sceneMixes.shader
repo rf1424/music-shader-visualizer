@@ -61,14 +61,21 @@ Shader "Unlit/sceneMixes"
             float3 _CameraPos;
             float3 _CameraTarget;
            
-            #include "hlsl/allShaders.hlsl"   
+            #include "hlsl/allShaders.hlsl"  
+            
+            // All the sceneVers!!!
+            #define DOUBLELAYER0 0
+            #define DOUBLELAYER1 1
+            #define BROKENSD 2
+            #define KALEID 3
+            #define KALEID2 4
             
             struct Light {
                 float3 dir;
                 float3 color;
             };
            
-            float3 getSimpleShading(float3 nor, int materialID) {
+            float3 getSimpleShading(float3 nor, int materialID, int sceneVer) {
                 Light lights[3];
 
                 lights[0].dir   = normalize(float3(-10.0, 15.0, 10.0));
@@ -92,14 +99,26 @@ Shader "Unlit/sceneMixes"
                     albedo = hsv2rgb(float3(h, .9, 0.6));
                     // albedo.b *= 0.1;
                 }
-                
-                // float3 col = albedo;
-               
-                float3 col = float3(0.0, 0.0, 0.0);
-                for (int i = 0; i < 3; i++) {
-                    col += albedo * lights[i].color * max(0., dot(nor, lights[i].dir));
+
+                // ----------------------------------------------------------------------
+                float3 col = 0;
+
+                if (sceneVer <= DOUBLELAYER0 || DOUBLELAYER1) {
+                     col = float3(0.0, 0.0, 0.0);
+                     for (int i = 0; i < 3; i++) {
+                     col += albedo * lights[i].color * max(0., dot(nor, lights[i].dir));
+                     }
                 }
-                 
+                if (sceneVer == BROKENSD || KALEID2) {
+                    col = albedo;
+                }
+                else {
+                    col = float3(0.0, 0.0, 0.0);
+                    for (int i = 0; i < 3; i++) {
+                        col += albedo * lights[i].color * max(0., dot(nor, lights[i].dir));
+                    }
+                }
+    
                 col = pow(col, 1.0 / 2.2);
                 return col;
             }
@@ -107,42 +126,98 @@ Shader "Unlit/sceneMixes"
             void cameraMove(out float3 EYEPOS, out float3 REF, int version) {
                 REF = float3(0., 0., 0.);
                 // default
-                if (version == 0) {
+                if (version == DOUBLELAYER0) {
                     
                     REF    = float3(0., -0.5, 0.);
                     EYEPOS = float3(0.0, -0.6, 1.);
                     
                 }
-                else if (version == 1) {
+                else if (version == DOUBLELAYER1) {
                     // spin
                     EYEPOS = float3(-1.6 + sin(_fracBeat * 2.), 1., 1.9);
                 }
-                else if (version == 2) {
-                    EYEPOS = float3(0.1, - 0.2, 5.);
+                else if (version == BROKENSD) {
+                    EYEPOS = float3(0.94, 0.86, 0.25);
                     
                 }
-                else if (version == 3) { // 2
-                     // EYEPOS = float3(10., CTIME, 0.);
-                    // EYEPOS = float3(STIME, CTIME, 0.);
-                    EYEPOS = float3(0.65, 1., 2.36) + float3(sin(_fracBeat), cos(TIME * 2.), 0.);
+                else if (version == KALEID ||KALEID2) { // 2
+                    EYEPOS = float3(0.1, - 0.2, 5.);
                 } else {
-                    EYEPOS = float3(0.65, 1., 2.36) + float3(0., 0., - TIME * _fracBeat);
+                    EYEPOS = float3(0., - 0.2, 5.);
                 }
+            }
+
+            float brokenSDF(float3 query, out int materialID)
+            {
+                float t = 0;
+                materialID = 0;
+                float3 q = query;
+                // q += (gradientNoise(query.xy + t*1.0));
+                float ret;
+                materialID = 0;
+                
+                // slide forward
+                // query.z -= TIME * 0.5 + 5.;
+                
+                // domain repeat along z
+                float spacing = 1.2;
+                int queryID = round(query.z / spacing);
+                int matSeed = round(query.z / spacing) * 73 + round(query.x / spacing) * 13;
+                query.z = query.z - spacing * round(query.z / spacing);
+                query.x = query.x - spacing * round(query.x / spacing);
+                
+                query -= float3(0., -0.5, 0.);
+                
+                // transforms:rotate
+                float noise = gradientNoise(query.xy + t*1.0);
+                query -= float3(0., -0.5, 0.);
+                query = rotateY(query, 20. * (sin(TIME * 5.)) * query.y + noise);
+                query = rotateX(query, 1. * (sin(TIME * 4.)) * query.y);
+                
+                
+                float3 scale = float3(1., STIME * .01 + 1., 1.);
+                query /= scale;
+                
+                // sdfs
+                
+                float star2 = starAnimalSDF2SpecColor(query, matSeed, materialID);
+                ret = star2;
+                bool isOdd = (queryID & 1) != 0;
+                if (isOdd)
+                {
+                    float sunglasses = sunglassesSDF(query - float3(0., 0.47, 0.23), 0.5);
+                    // material
+                    materialID = star2 < sunglasses ? materialID : RED;
+                    ret = min(star2, sunglasses);
+                }
+                    
+                ret *= min(min(scale.x, scale.y), scale.z);
+                return ret;
             }
 
             float sceneSDF(float3 query, out int materialID, int sceneVer)
             {
-                return superStardanceSDF1(query, materialID);
-                if (sceneVer == 0)
+                
+                if (sceneVer == DOUBLELAYER0)
                 {
                     return superStardanceSDF0(query, materialID);
                 }
-                else
+                else if (sceneVer == DOUBLELAYER1)
                 {
                     return superStardanceSDF1(query, materialID);
                 }
+                else if (sceneVer == BROKENSD) {
+                    return brokenSDF(query, materialID);
+                }
+                else if (sceneVer == KALEID) {
+                    return stardanceSDF3(query, materialID);
+                }
+                else if (sceneVer == KALEID2) {
+                    return superStardanceSDF5(query, materialID);
+                 }
 
-                
+                materialID = 0;
+                return sphereSDF(query, 0.3);
             }
             
 
@@ -175,22 +250,6 @@ Shader "Unlit/sceneMixes"
 
                 Intersection intersection = sdfRayMarch(ray, TIME, sceneVer);
 
-                // BG
-                // float scale = 1.;
-                // uv = kofFractal3(uv, 3., scale);
-                // uv /= scale;
-
-                // float beatSum = _MeanLevels[4] + _MeanLevels[5];
-                // beatSum = beatSum * 2000.;
-                // beatSum = pow(beatSum, 0.4);
-                // float d = step(length(frac(uv * 2.)), beatSum);
-                // uv = scroll(uv, beatSum);
-                // d = starChecker(uv, 3.);
-                // int odd = (int)floor(beatSum * 10.) & 1;
-                // uv = scroll(uv, float2(0., TIME * odd));
-                // d = starChecker(uv,3.);
-                // float3 bgColor = d * random3(_intBeat);
-
                 float3 bgColor = float3(random3(_intBeat));
                 float3 color = bgColor;
 
@@ -199,7 +258,7 @@ Shader "Unlit/sceneMixes"
                 if (intersection.hit && intersection.distance < 10000.) // TODO
                 {
                     
-                    color = getSimpleShading(intersection.normal, intersection.materialID);
+                    color = getSimpleShading(intersection.normal, intersection.materialID, sceneVer);
                 }
 
                 
@@ -250,10 +309,13 @@ Shader "Unlit/sceneMixes"
                 return d;
             }
 
-            float3 doubleLayeredStars(float2 uv) {
-                float3 col1 = pow(shootRays(uv, 0).r, 3.);
+            
 
-                float3 col2 = shootRays(uv, 1);
+
+            float3 doubleLayeredStars(float2 uv) {
+                float3 col1 = pow(shootRays(uv, DOUBLELAYER0).r, 3.);
+
+                float3 col2 = shootRays(uv, DOUBLELAYER1);
 
                 // BLUR
                 uv = uvOffset(uv);
@@ -281,9 +343,23 @@ Shader "Unlit/sceneMixes"
                 
                 // raymarch
                 // uv = mobius(uv);
-
-                col = doubleLayeredStars(uv);
-                // col = shootRays(uv, 1);
+                
+                if (TIME < 6.) {
+                    col = doubleLayeredStars(uv); //DOUBLELAYER0 & DOUBLELAYER1
+                }
+                else if (TIME < 11.) {
+                    col = shootRays(uv, BROKENSD);
+                }
+                else if (TIME < 14. ){
+                    float scale = 1.;
+                    uv = kofFractal4(uv, 2., scale);
+                    uv /= scale;
+                    col = shootRays(uv * 0.5, KALEID);
+                } else {
+                    uv = mobius(uv);
+                    col = shootRays(uv * 0.5, KALEID2);
+                }
+                
                 
                 return float4(col, 1.);
             }
@@ -325,8 +401,6 @@ Shader "Unlit/sceneMixes"
                 return o;
             }
 
-            
-
             float3 EdgeCrossFilter(float2 uv)
             {
                 float2 pixUnit = 1.0 / _ScreenParams.xy;
@@ -350,8 +424,8 @@ Shader "Unlit/sceneMixes"
                 float3 col = tex2D(_MainTex, i.uv).rgb;
                 
                 // overlay outlines
-                // float3 outlines = EdgeCrossFilter(i.uv + 0.2);
-                // col += length(outlines);
+                float3 outlines = EdgeCrossFilter(i.uv + 0.2);
+                col += length(outlines);
 
                 // col = 1. - col;
                 return float4(col, 1);
