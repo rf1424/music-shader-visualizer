@@ -5,16 +5,24 @@ using UnityEngine;
 // [ExecuteInEditMode]
 public class ImageEffect : MonoBehaviour
 {
-
     public AudioSource audioSource;
 
     public Material material;
-
     public List<Material> materials;
     int materialIndex = 0;
 
     private RenderTexture rt1;
-    // private RenderTexture rt2;
+
+    // --- Scene start times as readonly constants ---
+    public static class SceneStartTimes
+    {
+        public static float scene1Start = 46.8f; // intro start
+        public static float scene2Start = 75.0f; // jolly
+        public static float scene3Start = 99.75f; // soft
+        public static float scene4Start = 134.7f; // superjolly
+        public static float scene5Start = 162.5f; // spinny
+        public static float scene6Start = 200.0f; // final / extra
+    }
 
     void Update()
     {
@@ -23,60 +31,60 @@ public class ImageEffect : MonoBehaviour
         float bpm = 58.0f;
         float offset = 0.6f;
 
-
-        if (t < 75f) // intro
+        if (t < SceneStartTimes.scene2Start) // intro
         {
             materialIndex = 0;
-            localT = t - 46.8f;
+            localT = t - SceneStartTimes.scene1Start;
             offset = 0.4f;
         }
-        else if (t < 99.75f) // jolly
+        else if (t < SceneStartTimes.scene3Start) // jolly
         {
             materialIndex = 1;
-            localT = t - 75f;
+            localT = t - SceneStartTimes.scene2Start;
             offset = 0.0f;
         }
-        else if (t < 134.7f) // soft
+        else if (t < SceneStartTimes.scene4Start) // soft
         {
             materialIndex = 2;
-            localT = t - 99.75f;
+            localT = t - SceneStartTimes.scene3Start;
         }
-        else if (t < 162.5f) // superjolly
+        else if (t < SceneStartTimes.scene5Start) // superjolly
         {
             materialIndex = 3;
-            localT = t - 133.8f;
+            localT = t - SceneStartTimes.scene4Start;
             bpm = 72.0f;
             offset = 0.2f;
         }
-        else if (t < 200.0f)// spinny
+        else if (t < SceneStartTimes.scene6Start) // spinny
         {
             materialIndex = 4;
-            localT = t - 162.5f;
+            localT = t - SceneStartTimes.scene5Start;
         }
-        else {
+        else
+        {
             materialIndex = 5;
-            localT = t - 200.0f;
+            localT = t - SceneStartTimes.scene6Start;
+            bpm = 90.0f;
         }
 
-        Debug.Log(localT);
+        // Debug.Log(localT);
 
         material = materials[materialIndex];
 
         Shader.SetGlobalFloat("_time", localT);
-        // bpm
-        // float bpm = 58.0f;
+
+        // Beat calculation
         float secPerBeat = 60.0f / bpm;
         float beat = localT / secPerBeat + offset; // int + frac
-        int intBeat = (int)Mathf.Floor(beat); // integer beat count (increments every beat)
-        float fracBeat = beat - intBeat; // fractional phase of the beat (0 to 1)
+        int intBeat = (int)Mathf.Floor(beat);
+        float fracBeat = beat - intBeat;
 
         Shader.SetGlobalInt("_intBeat", intBeat);
         Shader.SetGlobalFloat("_fracBeat", fracBeat);
     }
 
-
     void OnEnable()
-    {  
+    {
         rt1 = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGB32);
         rt1.Create();
     }
@@ -91,7 +99,6 @@ public class ImageEffect : MonoBehaviour
 
     void OnDisable()
     {
-        // Clean up
         if (rt1 != null) rt1.Release();
     }
 }

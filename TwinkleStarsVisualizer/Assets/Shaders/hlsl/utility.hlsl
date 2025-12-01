@@ -86,6 +86,27 @@ float3 hsv2rgb(float3 c)
     return c.z * lerp(K.xxx, saturate(p - K.xxx), c.y);
 }
 
+float3 rgb2hsv(float3 c)
+{
+    float4 K = float4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
+    float4 p = (c.g < c.b) ? float4(c.bg, K.wz) : float4(c.gb, K.xy);
+    float4 q = (c.r < p.x) ? float4(p.xyw, c.r) : float4(c.r, p.yzx);
+
+    float d = q.x - min(q.w, q.y);
+    float e = 1e-10;
+
+    float h = abs(q.w - q.y) / (6.0 * d + e);
+    float s = d / (q.x + e);
+    float v = q.x;
+
+    return float3(h, s, v);
+}
+
+float3 posterize(float3 col, float steps)
+{
+    return floor(col * steps) / steps;
+}
+
 float random(float s)
 {
     return frac(sin(s * 123.49) *
@@ -138,7 +159,7 @@ float voronoi(float2 uv, float gridSize, out float2 closestPt)
     return minDist;
 }
 
-// Gradient Noise 2D by IQ
+// Noise functions by IQ ----------------------------------------------------
 float gradientNoise(float2 st)
 {
     float2 i = floor(st);
@@ -157,7 +178,64 @@ float gradientNoise(float2 st)
     return lerp(nx0, nx1, u.y);
 }
 
+float hash2D(int2 p)
+{
+    // 3D -> 1D collapse
+    int n = p.x * 3 + p.y * 113;
 
+    // Hugo Elias 1D hash
+    n = (n << 13) ^ n;
+    n = n * (n * n * 15731 + 789221) + 1376312589;
+
+    // convert to 0..1 float
+    return float(n & 0x0fffffff) / float(0x0fffffff);
+}
+
+float valueNoise2D(float2 x)
+{
+    int2 i = int2(floor(x));
+    float2 f = frac(x);
+
+    // Hermite smoothstep: f = f*f*(3-2*f)
+    f = f * f * (3.0 - 2.0 * f);
+
+    float a = lerp(hash2D(i + int2(0, 0)),
+                   hash2D(i + int2(1, 0)), f.x);
+
+    float b = lerp(hash2D(i + int2(0, 1)),
+                   hash2D(i + int2(1, 1)), f.x);
+
+    return lerp(a, b, f.y);
+}
+
+
+
+
+float fbm(float2 p, int iter)
+{
+    // PARAMETERS
+    int iterCount = iter;
+    float ampDecreaseFactor = 0.5;
+    float freqIncreaseFactor = 2.0;
+    float amp = 0.5;
+
+    // base values
+    float fbmSum = 0.0;
+    float2 seed = p;
+
+    [loop] 
+    for (int i = 0; i < iterCount; i++)
+    {
+        float g = valueNoise2D(seed);
+        fbmSum += g * amp;
+
+        amp *= ampDecreaseFactor;
+        seed *= freqIncreaseFactor;
+    }
+
+    return fbmSum;
+}
+// ------------------------------------------------------
 
 // KOF Fractals
 float2 getAngleNormal(float a)
@@ -168,12 +246,10 @@ float2 getAngleNormal(float a)
                 //col.b += smoothstep(0.02, 0., abs(reflLine));
 }
 
+// this one is more correct
 float2 getAngleNor(float a)
 {
     return float2(- sin(a), cos(a));
-                // visualize (pass uv)
-                //float reflLine = dot(nor1, uv);
-                //col.b += smoothstep(0.02, 0., abs(reflLine));
 }
 
 float2 kofFractal(float2 uv, int numLoops, out float scale)

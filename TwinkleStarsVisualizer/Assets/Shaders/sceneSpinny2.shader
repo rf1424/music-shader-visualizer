@@ -89,11 +89,11 @@ Shader "Unlit/sceneSpinny2"
                 else { albedo = random3(nor.x + materialID); }
                 
 
-                // float3 col = float3(0.0, 0.0, 0.0);
-                // for (int i = 0; i < 3; i++) {
-                //     col += albedo * lights[i].color * max(0., dot(nor, lights[i].dir));
-                // }
-                float3 col = albedo;
+                float3 col = float3(0.0, 0.0, 0.0);
+                for (int i = 0; i < 3; i++) {
+                    col += albedo * lights[i].color * max(0., dot(nor, lights[i].dir));
+                }
+                
 
                 col = pow(col, 1.0 / 2.2);
                 return col;
@@ -117,80 +117,7 @@ Shader "Unlit/sceneSpinny2"
             
             }
 
-            float starTunnelSDF3(float3 query, out int materialID)
-            {
-                // float speed = 0.;
-                // for (int i = 0; i < 4; i++)
-                // {
-                //     speed += _MeanLevels[i] * 10.;
             
-                // }
-
-                float speed =  3.;//_MeanLevels[2] * 1;
-                    
-                // parameters
-                float2 offset = 0.05 * float2(cos(TIME + 0.3), STIME);
-                float forwardSpeed = TIME * (speed);//TIME * 3.;
-                
-                // spin
-                query.xy = mul(rot(TIME), query.xy);
-                
-                float spacing = .4;
-                query -= float3(0., 0., forwardSpeed);
-                float queryID = round(clamp(query.z, -10. - forwardSpeed, 1.) / spacing);
-                query.z = query.z - spacing * queryID;
-                
-                float plane = abs(query.z) - 0.001; // width 0.01
-                
-                // float3 sq = query / float3(speed, speed, speed);
-                float starFlat = sdfPentagram(query.xy, 0.5);
-                // starFlat *= speed;
-                
-                float starExtruded = max(starFlat, abs(query.z) - 0.1);
-                
-                float d = max(-starExtruded, plane);
-                
-                materialID = queryID;
-                return d;
-            }
-
-            
-
-            float starTunnelSDF4(float3 query, out int materialID)
-            {
-                float tunnelEndz = - 23.;
-                // rotate
-                float angle = .1 * query.z + TIME;
-                query.xy = mul(rot(angle), query.xy);
-
-                
-                // star creature
-                float3 sq = query - float3(0., 0., tunnelEndz - 1.);
-                sq = rotateX(sq, radians(180.));
-                float scale = 0.3;
-                sq /= scale;
-                float starCreature = stardanceSDF0(sq, materialID);
-                starCreature *= scale;
-
-                // z axis domain repetition 
-                float spacing = .4;
-                float queryID = round(clamp(query.z, tunnelEndz, - tunnelEndz) / spacing);
-                query.z = query.z - spacing * queryID;
-                
-                // star tunnel
-                float starFlat = sdfPentagram(query.xy, 0.5);
-                starFlat = starFlat - 0.03; // round
-                starFlat = abs(starFlat) - 0.01; // near-edge only
-                float starExtruded = max(starFlat, abs(query.z) - 0.1);
-                
-                float d = min(starExtruded, starCreature);
-
-                if (starExtruded < starCreature) {
-                    materialID = queryID + 50;
-                }
-                
-                return d;
-            }
 
             float sceneSDF(float3 query, out int materialID, int sceneVer)
             {

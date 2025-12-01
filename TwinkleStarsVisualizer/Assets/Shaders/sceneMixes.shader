@@ -69,6 +69,7 @@ Shader "Unlit/sceneMixes"
             #define BROKENSD 2
             #define KALEID 3
             #define KALEID2 4
+            #define TUNNEL 5
             
             struct Light {
                 float3 dir;
@@ -103,13 +104,7 @@ Shader "Unlit/sceneMixes"
                 // ----------------------------------------------------------------------
                 float3 col = 0;
 
-                if (sceneVer <= DOUBLELAYER0 || DOUBLELAYER1) {
-                     col = float3(0.0, 0.0, 0.0);
-                     for (int i = 0; i < 3; i++) {
-                     col += albedo * lights[i].color * max(0., dot(nor, lights[i].dir));
-                     }
-                }
-                if (sceneVer == BROKENSD || KALEID2) {
+                if (sceneVer <=4) {
                     col = albedo;
                 }
                 else {
@@ -125,6 +120,7 @@ Shader "Unlit/sceneMixes"
 
             void cameraMove(out float3 EYEPOS, out float3 REF, int version) {
                 REF = float3(0., 0., 0.);
+                
                 // default
                 if (version == DOUBLELAYER0) {
                     
@@ -140,9 +136,15 @@ Shader "Unlit/sceneMixes"
                     EYEPOS = float3(0.94, 0.86, 0.25);
                     
                 }
-                else if (version == KALEID ||KALEID2) { // 2
-                    EYEPOS = float3(0.1, - 0.2, 5.);
-                } else {
+                else if (version == KALEID) {
+                    EYEPOS = float3(0., 0., 0.2);
+                }
+                else if (version == KALEID2) { // 2
+                    EYEPOS = float3(5.23, 7.80, 13.44);   
+                } else if (version == TUNNEL) {
+                    EYEPOS = float3(0.1, -0.2, 5.);
+                }
+                else {
                     EYEPOS = float3(0., - 0.2, 5.);
                 }
             }
@@ -213,8 +215,14 @@ Shader "Unlit/sceneMixes"
                     return stardanceSDF3(query, materialID);
                 }
                 else if (sceneVer == KALEID2) {
-                    return superStardanceSDF5(query, materialID);
-                 }
+
+                    return superStardanceSDF3(query, materialID);
+                    // return starTunnelSDF2(query, materialID);
+                }
+
+                else if (sceneVer == TUNNEL) {
+                   return starTunnelSDF4(query, materialID);
+                }
 
                 materialID = 0;
                 return sphereSDF(query, 0.3);
@@ -260,8 +268,6 @@ Shader "Unlit/sceneMixes"
                     
                     color = getSimpleShading(intersection.normal, intersection.materialID, sceneVer);
                 }
-
-                
 
                 // fog
                 float s = smoothstep(1., 50., intersection.distance);
@@ -309,11 +315,9 @@ Shader "Unlit/sceneMixes"
                 return d;
             }
 
-            
-
-
             float3 doubleLayeredStars(float2 uv) {
                 float3 col1 = pow(shootRays(uv, DOUBLELAYER0).r, 3.);
+                
 
                 float3 col2 = shootRays(uv, DOUBLELAYER1);
 
@@ -330,7 +334,48 @@ Shader "Unlit/sceneMixes"
                 float d = starRand3(uv);
                 return lerp(col1, col2, d);
             }
-            
+
+            float3 sceneMixer(float2 uv, int i) {
+                float3 col = 0.;
+                if (i==0) {col = doubleLayeredStars(uv); DOUBLELAYER0 & DOUBLELAYER1;}
+                else if (i==1) {
+                    col = shootRays(uv, BROKENSD);  
+                }
+                else if (i==2) {
+                    float scale = 1.;
+                    uv = kofFractal3(uv, 2., scale);
+                    uv /= scale;
+                    col = shootRays(uv / 0.5, KALEID);
+                }
+                else if (i==3) {
+                    uv = mobius(uv);
+                    col = shootRays(uv * 0.5, KALEID2);
+                }
+                else if (i==4) {
+                    float2 uvSeed = uv * 1. - float2(TIME, 0.) + floor(TIME * 2.);
+                    float mask = fbm(uvSeed, 2);
+                    // mask = mask * 0.5 + 0.5;
+                    mask = smoothstep(0.3, 0.5, mask);
+                    float2 cp;
+                    // mask = abs(mask - voronoi(uv, 1000., cp)) - mask;
+                    //mask = clamp(mask, 0., 1.);
+
+                    float3 c1 = shootRays(uv, DOUBLELAYER1);
+                    float3 c2 = 1 - pow(c1, 0.1);
+                    col = lerp(c2, c1, mask);
+                    col = posterize(col, 3.);
+                }
+                else if (i==5) {
+                    float t = cos(TIME * 2.) > 0.7 ? sin(TIME * 3.) : 1;
+                    float uvOffset = fbm(uv + TIME, 2.);
+                    col = shootRays(uv * t + uvOffset, TUNNEL);
+                    col = posterize(col, 3.);
+                }
+
+               
+
+                return col;
+            }
 
             fixed4 frag (v2f i) : SV_Target
             {
@@ -340,27 +385,12 @@ Shader "Unlit/sceneMixes"
                 fixed3 col = float3(0., 0., 0.);
                 
                 
-                
-                // raymarch
-                // uv = mobius(uv);
-                
-                if (TIME < 6.) {
-                    col = doubleLayeredStars(uv); //DOUBLELAYER0 & DOUBLELAYER1
-                }
-                else if (TIME < 11.) {
-                    col = shootRays(uv, BROKENSD);
-                }
-                else if (TIME < 14. ){
-                    float scale = 1.;
-                    uv = kofFractal4(uv, 2., scale);
-                    uv /= scale;
-                    col = shootRays(uv * 0.5, KALEID);
-                } else {
-                    uv = mobius(uv);
-                    col = shootRays(uv * 0.5, KALEID2);
-                }
-                
-                
+                int scene = floor(_intBeat / 2 - 1) % 6;
+                scene = max(0, scene); // beginning
+                if (TIME > 24.) scene = 5; // ending
+                col = sceneMixer(uv, scene);
+
+                // col = sceneMixer(uv, 3);
                 return float4(col, 1.);
             }
             ENDCG
@@ -368,7 +398,6 @@ Shader "Unlit/sceneMixes"
 
         // second pass
         Pass {
-
             ZTest Always
             ZWrite Off
             Cull Off
@@ -378,6 +407,16 @@ Shader "Unlit/sceneMixes"
             #pragma vertex vertPass1
             #pragma fragment fragPass1
             #include "UnityCG.cginc"
+
+            float _Levels[8];
+            float _PeakLevels[8];
+            float _MeanLevels[8];
+            float _highestBeat4; /// simply tracks current peakLevel max for 2
+            float _time;
+            int _intBeat; // float _intBeat;
+            float _fracBeat;
+
+            #include "hlsl/allPostProcess.hlsl"
 
             sampler2D _MainTex; // rtA
 
@@ -423,11 +462,30 @@ Shader "Unlit/sceneMixes"
             {
                 float3 col = tex2D(_MainTex, i.uv).rgb;
                 
-                // overlay outlines
-                float3 outlines = EdgeCrossFilter(i.uv + 0.2);
-                col += length(outlines);
 
-                // col = 1. - col;
+                if (TIME > 15. && sin(TIME * 10.) > 0.7) {
+                    col = rgb2hsv(col);
+                    float t = (TIME * 0.5 + gradientNoise(i.uv * 2.));
+                    float h = frac(col.x + t);
+                    col = hsv2rgb(float3(h, col.y, col.z));
+                }
+
+                // col = (col - 0.5) * 5. + 0.5;
+                // col = pow(col, 10.);
+                // col1 = posterize(col1, 10.);
+
+                // overlay outlines
+                float3 outline1 = EdgeCrossFilter(i.uv + 0.2);
+                col += length(outline1);
+
+                
+                float2 uvSeed = i.uv + gradientNoise(i.uv * STIME * 10.);
+                float3 outline2 = EdgeCrossFilter(uvSeed);
+                // col += outline2;
+
+                if (TIME > 25.5) {
+                    col = 0;
+                }
                 return float4(col, 1);
             }
 

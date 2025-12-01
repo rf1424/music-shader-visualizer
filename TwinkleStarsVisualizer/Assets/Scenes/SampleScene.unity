@@ -276,7 +276,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 421496372}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fd4b70264327e1d46830c39e866dba33, type: 3}
   m_Name: 
@@ -390,9 +390,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   audioSource: {fileID: 421496379}
-  startTime: 170
-  loopStart: 170
-  loopEnd: 198
+  startTime: 220
+  loopStart: 48.8
+  loopEnd: 229
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0

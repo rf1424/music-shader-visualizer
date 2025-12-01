@@ -237,6 +237,7 @@ float sunglassesSDF(float3 query, float scale)
 }
 
 
+// simple star extrusion
 float starCreatureSDF(float3 query, out int materialID)
 {
     materialID = 1.;
@@ -280,10 +281,10 @@ float starAnimalSDF2BiColor(float3 q, int queryID, out int materialID)
     const float2 armAng = float2(sin(radians(28.0)), cos(radians(28.0)));
 
     // BODY
-    float3 bodyScale = float3(1., 1., 0.6);
+    float3 bodyScale = float3(1., .95, 0.5); //float3(1., 1., 0.6)
     float3 bq = q / bodyScale;
     float body = coneSDF(bq, bodyAng, 1.0);
-    body -= 0.01;
+    body -= 0.06;//-0.01
     float bodyScaleMin = min(min(bodyScale.x, bodyScale.y), bodyScale.z);
 
     // MIRROR QUERY
@@ -291,11 +292,11 @@ float starAnimalSDF2BiColor(float3 q, int queryID, out int materialID)
     mq.x = abs(mq.x); // << Perfect mathematical symmetry here
 
     // ARMS
-    float3 aq = (mq / bodyScale) - float3(0.6, -0.5, 0.);
+    float3 aq = (mq / bodyScale) - float3(0.65, -0.5, 0.);
     aq = rotateZ(aq, radians(75.0));
 
     float arms = coneSDF(aq, armAng, 0.4);
-    arms -= 0.01;
+    arms -= 0.03;
     // BODY + ARMS
     float smoothStar = smoothUnion(body, arms, 0.02);
     smoothStar *= bodyScaleMin;
@@ -345,6 +346,12 @@ float starAnimalSDF2BiColor(float3 q, int queryID, out int materialID)
     smoothStar = min(smoothStar, feet);
 
     return smoothStar;
+}
+
+
+float starAnimalSDF2(float3 q, out int materialID)
+{
+    return starAnimalSDF2BiColor(q, 0, materialID);
 }
 
 float starAnimalSDF2SpecColor(float3 q, int queryID, out int materialID)
@@ -357,10 +364,10 @@ float starAnimalSDF2SpecColor(float3 q, int queryID, out int materialID)
     const float2 armAng = float2(sin(radians(28.0)), cos(radians(28.0)));
 
     // BODY
-    float3 bodyScale = float3(1., 1., 0.6);
+    float3 bodyScale = float3(1., .95, 0.5);//float3(1., 1., 0.6);
     float3 bq = q / bodyScale;
     float body = coneSDF(bq, bodyAng, 1.0);
-    body -= 0.01;
+    body -= 0.06;//0.01;
     float bodyScaleMin = min(min(bodyScale.x, bodyScale.y), bodyScale.z);
 
     // MIRROR QUERY
@@ -372,7 +379,7 @@ float starAnimalSDF2SpecColor(float3 q, int queryID, out int materialID)
     aq = rotateZ(aq, radians(75.0));
 
     float arms = coneSDF(aq, armAng, 0.4);
-    arms -= 0.01;
+    arms -= 0.03;
     // BODY + ARMS
     float smoothStar = smoothUnion(body, arms, 0.02);
     smoothStar *= bodyScaleMin;
@@ -426,10 +433,6 @@ float starAnimalSDF2SpecColor(float3 q, int queryID, out int materialID)
 
 
 
-float starAnimalSDF2(float3 q, out int materialID)
-{
-    return starAnimalSDF2BiColor(q, 0, materialID);
-}
 
 
 // DEFAULT BEND --------------------------------------------------------------------------------
@@ -754,15 +757,13 @@ float superStardanceSDF3(float3 query, out int materialID)
     float ret;
     materialID = 0;
     
-    // slide forward
-    // query.z -= TIME * 0.5 + 5.;
-    
-    // domain repeat along z
+    // domain repeat along x z
+    query -= float3(0., -1.5, -10.);
     
     int queryID = round(query.x / 1.5);
     query.x = query.x - 1.5 * round(query.x / 1.5);
+    query.z = query.z - 1.5 * round(query.z / 1.5);
     
-    query -= float3(0., -1.5, -10.);
     
     float3 scale = float3(1., 1., 1.);
     
@@ -884,6 +885,82 @@ float starTunnelSDF2(float3 query, out int materialID)
     float d = max(-starExtruded, plane);
     
     materialID = queryID;
+    return d;
+}
+
+float starTunnelSDF3(float3 query, out int materialID)
+{
+                // float speed = 0.;
+                // for (int i = 0; i < 4; i++)
+                // {
+                //     speed += _MeanLevels[i] * 10.;
+            
+                // }
+
+    float speed = 3.; //_MeanLevels[2] * 1;
+                    
+                // parameters
+    float2 offset = 0.05 * float2(cos(TIME + 0.3), STIME);
+    float forwardSpeed = TIME * (speed); //TIME * 3.;
+                
+                // spin
+    query.xy = mul(rot(TIME), query.xy);
+                
+    float spacing = .4;
+    query -= float3(0., 0., forwardSpeed);
+    float queryID = round(clamp(query.z, -10. - forwardSpeed, 1.) / spacing);
+    query.z = query.z - spacing * queryID;
+                
+    float plane = abs(query.z) - 0.001; // width 0.01
+                
+                // float3 sq = query / float3(speed, speed, speed);
+    float starFlat = sdfPentagram(query.xy, 0.5);
+                // starFlat *= speed;
+                
+    float starExtruded = max(starFlat, abs(query.z) - 0.1);
+                
+    float d = max(-starExtruded, plane);
+                
+    materialID = queryID;
+    return d;
+}
+
+            
+
+float starTunnelSDF4(float3 query, out int materialID)
+{
+    float tunnelEndz = -23.;
+                // rotate
+    float angle = .1 * query.z + TIME;
+    query.xy = mul(rot(angle), query.xy);
+
+                
+                // star creature
+    float3 sq = query - float3(0., 0., tunnelEndz - 1.);
+    sq = rotateX(sq, radians(180.));
+    float scale = 0.3;
+    sq /= scale;
+    float starCreature = stardanceSDF0(sq, materialID);
+    starCreature *= scale;
+
+                // z axis domain repetition 
+    float spacing = .4;
+    float queryID = round(clamp(query.z, tunnelEndz, -tunnelEndz) / spacing);
+    query.z = query.z - spacing * queryID;
+                
+                // star tunnel
+    float starFlat = sdfPentagram(query.xy, 0.5);
+    starFlat = starFlat - 0.03; // round
+    starFlat = abs(starFlat) - 0.01; // near-edge only
+    float starExtruded = max(starFlat, abs(query.z) - 0.1);
+                
+    float d = min(starExtruded, starCreature);
+
+    if (starExtruded < starCreature)
+    {
+        materialID = queryID + 50;
+    }
+                
     return d;
 }
 // ----------------------------------------------------------------------------------------------

@@ -113,12 +113,14 @@ Shader "Unlit/sceneSuperJolly"
                     
                 }
                 else if (version == 1) {
+                   
                     float f = fmod(_fracBeat, 1.) * 2.5;
                     EYEPOS = float3(-1.6 + sin(f), 1., 1.9);
                 }
                 else if (version == 2) {
-                    EYEPOS = float3(0.1, - 0.2, 0.) + float3(0., 0., TIME * 0.1);
-                    
+
+                    EYEPOS = float3(0.04, 6.60, -0.11);//float3(0.1, 0., 10.);// + float3(0., 0., TIME * 0.1);
+                   
                 }
                 else if (version == 3) {
                     EYEPOS = float3(0.65, 1., 2.36) + float3(sin(_fracBeat), cos(TIME * 2.), 0.);
