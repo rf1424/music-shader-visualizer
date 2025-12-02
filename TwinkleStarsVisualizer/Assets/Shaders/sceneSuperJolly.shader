@@ -165,8 +165,8 @@ Shader "Unlit/sceneSuperJolly"
                 // camera setup
                 float3 EYEPOS = _CameraPos;
                 float3 REF = _CameraTarget;
-                int switchBt = ((_intBeat - 1) / 4) % 5;
-                if (switchBt==0 && (_intBeat - 1) / 4 !=0) switchBt = 4;
+                int switchBt = ((_intBeat) / 4) % 5;
+                if (switchBt==0 && (_intBeat) / 4 !=0) switchBt = 4;
                 //float3 EYEPOS;
                 //float3 REF;
                 cameraMove(EYEPOS, REF, switchBt);

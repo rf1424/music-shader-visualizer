@@ -88,11 +88,25 @@ Shader "Unlit/sceneSpinny2"
 
                 else { albedo = random3(nor.x + materialID); }
                 
-
                 float3 col = float3(0.0, 0.0, 0.0);
                 for (int i = 0; i < 3; i++) {
                     col += albedo * lights[i].color * max(0., dot(nor, lights[i].dir));
                 }
+
+                if (TIME > 23.1) {
+                    col = lerp(col, 0., 0.98);
+                } 
+                if (TIME > 25.36) {
+                    col = albedo * lights[2].color * max(1., dot(nor, lights[2].dir));
+                }
+                if (TIME > 27.3) {
+                    col = albedo * lights[1].color * max(1., dot(nor, lights[1].dir)) * 2.;
+                } 
+                if (TIME > 29.15){
+                    col = albedo * lights[0].color * max(0., dot(nor, lights[0].dir)) * 6.;
+                }
+                
+                
                 
 
                 col = pow(col, 1.0 / 2.2);
@@ -122,7 +136,7 @@ Shader "Unlit/sceneSpinny2"
             float sceneSDF(float3 query, out int materialID, int sceneVer)
             {
                 materialID = BROWN;
-                return starTunnelSDF4(query, materialID);
+                return starTunnelSDF5(query, materialID);
             }
 
             float Lerp3(float a, float b, float c, float t)
@@ -166,13 +180,6 @@ Shader "Unlit/sceneSpinny2"
                 REF = EYEPOS - float3(0., 0., 1.);// // EYEPOS - float3(0., 0., 1.);
                 REF = float3(0., 0., limitPos + 1.);
                 
-                // turn camera
-                // if (TIME > 22.) {
-                //     float refLerp = Lerp3(0., 1., 0., clamp(TIME - 22., 0., 1.)) * 20.;
-                //     // turns again at - limitPos / 2.
-                //     REF = float3(0., refLerp, - limitPos / 2.);
-                // }
-
                 float3 cameraForward = normalize(REF - EYEPOS);
                 float3 cameraRight = normalize(cross(cameraForward, WORLD_UP));
                 float3 cameraUp = normalize(cross(cameraRight, cameraForward));
@@ -284,7 +291,7 @@ Shader "Unlit/sceneSpinny2"
 
                col = lerp(col, starOverlay, starOverlay.x * 0.3);
 
-
+               
                float scale = 1.;
                 uv = kofFractal3(uv, 3., scale);
                 uv /= scale;
@@ -300,7 +307,8 @@ Shader "Unlit/sceneSpinny2"
                 float3 bgColor = d * random3(_intBeat);
 
                 col = lerp(col, bgColor, d);
-
+                
+                
                return float4(col, 1);
             }
 

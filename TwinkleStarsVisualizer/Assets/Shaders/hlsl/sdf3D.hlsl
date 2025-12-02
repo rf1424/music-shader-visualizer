@@ -963,6 +963,44 @@ float starTunnelSDF4(float3 query, out int materialID)
                 
     return d;
 }
+
+float starTunnelSDF5(float3 query, out int materialID)
+{
+    float tunnelEndz = -23.;
+    // rotate
+    float a = smoothstep(-3., 1., query.z) * 0.6;
+    float angle = a * query.z + TIME;
+    query.xy = mul(rot(angle), query.xy);
+
+                
+    // star creature
+    float3 sq = query - float3(0., 0., tunnelEndz - 1.);
+    sq = rotateX(sq, radians(180.));
+    float scale = 0.3;
+    sq /= scale;
+    float starCreature = stardanceSDF0(sq, materialID);
+    starCreature *= scale;
+
+    // z axis domain repetition 
+    float spacing = .4;
+    float queryID = round(clamp(query.z, tunnelEndz, -tunnelEndz) / spacing);
+    query.z = query.z - spacing * queryID;
+                
+    // star tunnel
+    float starFlat = sdfPentagram(query.xy, 0.5);
+    starFlat = starFlat - 0.03; // round
+    starFlat = abs(starFlat) - 0.01; // near-edge only
+    float starExtruded = max(starFlat, abs(query.z) - 0.1);
+                
+    float d = min(starExtruded, starCreature);
+
+    if (starExtruded < starCreature)
+    {
+        materialID = queryID + 50;
+    }
+                
+    return d;
+}
 // ----------------------------------------------------------------------------------------------
 
             // modified for sdf

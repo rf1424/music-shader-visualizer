@@ -18,17 +18,6 @@ public class AudioPlayControl : MonoBehaviour
         audioSource.Play();
     }
 
-    // Update is called once per frame
-    //void Update()
-    //{
-    //    // If we pass the loop end, jump back to loop start
-    //    if (audioSource.time >= loopEnd)
-    //    {
-    //        audioSource.time = loopStart;
-    //    }
-
-    //}
-
     void Update()
     {
         // loop

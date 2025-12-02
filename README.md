@@ -1,126 +1,120 @@
-# Final Project!
-
-## Project Planning Design Doc [HERE](https://docs.google.com/document/d/1ffv00gQvbQnZJRKyFoVGXLVfNMM5tjUuZfobjac_3EM/edit?usp=sharing)
-
-## Milestone 1 
-I completed the basic functionality in Unity where audio input is parsed into 8 bands and passed to the shader. The shader takes these Uniforms and outputs a simple visual. 
-
-https://github.com/user-attachments/assets/8d5c1a9b-f814-4c02-ba53-44478c2336b7
+# Twinkle Star Music Video
 
 
+[![Pp Blend1](image/ppBlend1.png)](https://github.com/your/repo)
+# [LINK TO VIDEO HERE](https://youtu.be/CtJviZKfxnU)
 
-This is it! The culmination of your procedural graphics experience this semester. For your final project, we'd like to give you the time and space to explore a topic of your choosing. You may choose any topic you please, so long as you vet the topic and scope with an instructor or TA. We've provided some suggestions below. The scope of your project should be roughly 1.5 homework assignments). To help structure your time, we're breaking down the project into 4 milestones:
+This was an attempt for me to create a real-time music video/audio visualizer entirely using shaders.
+For my music, I used variations from [*7 Variations of Twinkle Twinkle Little Star*](https://youtu.be/IpqFDOliUpA?si=YhmFR4N3xhVINMSU) by the pianist Hayato Sumino.
+My goal was to make a different shader scene for different variations of the music that match the tone of the music.
+I used Unity as my platform. 
 
-## Project planning: Design Doc (due 11/5)
-Before submitting your first milestone, _you must get your project idea and scope approved by Rachel, Adam or a TA._
 
-### Design Doc
-Start off by forking this repository. In your README, write a design doc to outline your project goals and implementation plan. It must include the following sections:
+SCENE 1
+![Scenelerp](image/scenelerp.png)
+SCENE 2
+![Sdf1](image/sdf1.png)
+SCENE 3
+![Scene3](image/scene3.png)
+SCENE 4
+![Scene Jolly](image/sceneJolly.png)
+SCENE 5
+![Scene Spinny](image/sceneSpinny.png)
+SCENE 6
+![Scene Mix](image/sceneMix.png)
 
-#### Introduction
-- What motivates your project?
+## BREAKDOWNS
 
-#### Goal
-- What do you intend to achieve with this project?
+### Visualizing audio: Sound to Screen
+In order to convert the sound into different audio bands, I used this [unity-audio-spectrum](https://github.com/keijiro/unity-audio-spectrum) script. 
+I also passed in BPM and time variables to control scene switches.
 
-#### Inspiration/reference:
-- You must have some form of reference material for your final project. Your reference may be a research paper, a blog post, some artwork, a video, another class at Penn, etc.  
-- Include in your design doc links to and images of your reference material.
+Here is an example of translating the audio bands into the y-positions and rotations
+of the stars. 
+![A U D I O](image/AUDIO.png)
+![A U D I O S T A R](image/AUDIOSTAR.png)
+### Shader Implementations
 
-#### Specification:
-- Outline the main features of your project.
+#### SDFs
+I creatured a star character that appears in all of my scenes by SDF modeling.
+![Sdf0](image/sdf0.png)
+They have tails:
+![Sdf3](image/sdf3.png)
 
-#### Techniques:
-- What are the main technical/algorithmic tools you’ll be using? Give an overview, citing specific papers/articles.
+Domain Repetition of the Star Creatures:
+![Sdf2](image/sdf2.png)
+![Domain Rep0](image/domainRep0.png)
+![Domain Rep2](image/domainRep2.png)
+![Domain Rep1](image/domainRep1.png)
 
-#### Design:
-- How will your program fit together? Make a simple free-body diagram illustrating the pieces.
+Domain Repetition for the Star Tunnel, base SDF by extruding star at the edges:
+![Domain Rep3](image/domainRep3.png)
+Domain-repeat along z-axis:
+![Tunnel Domain Rep1](image/tunnelDomainRep1.png)
+Twist along z:
+![Tunnel Domain Rep2](image/tunnelDomainRep2.png)
+#### KIFS Fractals
+I followed this [tutorial]((https://youtu.be/__dSLc7-Cpo?si=G0Z9K2c7RjMLnStR)) create KIFS fractals. This is a technique that folds UV space recursively to create fractals like origami.
 
-#### Timeline:
-- Create a week-by-week set of milestones for each person in your group. Make sure you explicitly outline what each group member's duties will be.
+![Kof Fold0](image/kofFold0.png)
+![Kof Fold1](image/kofFold1.png)
+![Kof Fold2](image/kofFold2.png)
+![Kof Fold3](image/kofFold3.png)
+Using this to fold this sparkle pattern:
+![Kof Sparkle1](image/kofSparkle1.png)
+![Kof Sparkle0](image/kofSparkle0.png)
 
-Submit your Design doc as usual via pull request against this repository.
-## Milestone 1: Implementation part 1 (due 11/12)
-Begin implementing your engine! Don't worry too much about polish or parameter tuning -- this week is about getting together the bulk of your generator implemented. By the end of the week, even if your visuals are crude, the majority of your generator's functionality should be done.
+Applying KIF Fractals to 3D space:
+![Kofsdf U V](image/kofsdfUV.png)
+Take the x-coords:
+![Kofsdf Xvalue](image/kofsdfXvalue.png)
+Use it as 2D distance field:
+![Kofsd2d](image/kofsd2d.png)
+Extrude:
+![Kof3dextrude](image/kof3dextrude.png)
+Extrude along all three axis and union them:
+![Kof3dall Axis](image/kof3dallAxis.png)
 
-Put all your code in your forked repository.
+#### Post processing effects
+Original:
+![Pp Kif1](image/ppKif1.png)
+Overlay kif fractal outlines, randomly domain-repeated sparks:
+![Pp Kif0](image/ppKif0.png)
 
-Submission: Add a new section to your README titled: Milestone #1, which should include
-- written description of progress on your project goals. If you haven't hit all your goals, what's giving you trouble?
-- Examples of your generators output so far
-We'll check your repository for updates. No need to create a new pull request.
-## Milestone 2: Implementation part 2 (due 11/24)
-We're over halfway there! This week should be about fixing bugs and extending the core of your generator. Make sure by the end of this week _your generator works and is feature complete._ Any core engine features that don't make it in this week should be cut! Don't worry if you haven't managed to exactly hit your goals. We're more interested in seeing proof of your development effort than knowing your planned everything perfectly. 
+UV distortions:
+![Noise U V0](image/noiseUV0.png)
+![Noise U V](image/noiseUV.png)
 
-Put all your code in your forked repository.
+![Mobius Transform2](image/mobiusTransform2.png)
+![Mobius Transform1](image/mobiusTransform1.png)
+Original:
+![Pp Blend Orig](image/ppBlendOrig.png)
+Mask: 
+![Pp Blend Mask](image/ppBlendMask.png)
+Blend using mask, invert colors:
+![Pp Blend3](image/ppBlend3.png)
+Posterize:
+![Pp Blend2](image/ppBlend2.png)
+Overlay outline with distortion:
+![Pp Blend0](image/ppBlend0.png)
 
-Submission: Add a new section to your README titled: Milestone #3, which should include
-- written description of progress on your project goals. If you haven't hit all your goals, what did you have to cut and why? 
-- Detailed output from your generator, images, video, etc.
-We'll check your repository for updates. No need to create a new pull request.
 
-Come to class on the due date with a WORKING COPY of your project. We'll be spending time in class critiquing and reviewing your work so far.
 
-## Final submission (due 12/1)
-Time to polish! Spen this last week of your project using your generator to produce beautiful output. Add textures, tune parameters, play with colors, play with camera animation. Take the feedback from class critques and use it to take your project to the next level.
 
-Submission:
-- Push all your code / files to your repository
-- Come to class ready to present your finished project
-- Update your README with two sections 
-  - final results with images and a live demo if possible
-  - post mortem: how did your project go overall? Did you accomplish your goals? Did you have to pivot?
+## Post Mortem
+I had a lot of fun writing shaders. I learned a lot of interesting shader and audio visual techniques. 
+Thinking of a way to visualize audio nicely was a challenge, and I hope to explore 
+how others creatively translate audio to visual more!
 
-## Topic Suggestions
+I’ve been considering why this project makes sense to build with real-time shaders. At times, I spent a lot of 
+effort making dynamic camera movements or optimizing runtime performance. These were tasks that might have been 
+simpler in a traditional 3D tool, especially since this project was tied to a specific audio track.
+At the same time many cool techniques built on shader capabilities-fractal generation, domain repetition, smooth 
+SDF blending, and other procedural techniques that are hard to achieve as efficiently with other tools. 
+I hope to explore more on what shaders are good at so I can utilize its power to a greater extent. Overall this project
+was a great balance of technical and artistic :star:
 
-### Create a generator in Houdini
-
-### A CLASSIC 4K DEMO
-- In the spirit of the demo scene, create an animation that fits into a 4k executable that runs in real-time. Feel free to take inspiration from the many existing demos. Focus on efficiency and elegance in your implementation.
-- Example: 
-  - [cdak by Quite & orange](https://www.youtube.com/watch?v=RCh3Q08HMfs&list=PLA5E2FF8E143DA58C)
-
-### A RE-IMPLEMENTATION
-- Take an academic paper or other pre-existing project and implement it, or a portion of it.
-- Examples:
-  - [2D Wavefunction Collapse Pokémon Town](https://gurtd.github.io/566-final-project/)
-  - [3D Wavefunction Collapse Dungeon Generator](https://github.com/whaoran0718/3dDungeonGeneration)
-  - [Reaction Diffusion](https://github.com/charlesliwang/Reaction-Diffusion)
-  - [WebGL Erosion](https://github.com/LanLou123/Webgl-Erosion)
-  - [Particle Waterfall](https://github.com/chloele33/particle-waterfall)
-  - [Voxelized Bread](https://github.com/ChiantiYZY/566-final)
-
-### A FORGERY
-Taking inspiration from a particular natural phenomenon or distinctive set of visuals, implement a detailed, procedural recreation of that aesthetic. This includes modeling, texturing and object placement within your scene. Does not need to be real-time. Focus on detail and visual accuracy in your implementation.
-- Examples:
-  - [The Shrines](https://github.com/byumjin/The-Shrines)
-  - [Watercolor Shader](https://github.com/gracelgilbert/watercolor-stylization)
-  - [Sunset Beach](https://github.com/HanmingZhang/homework-final)
-  - [Sky Whales](https://github.com/WanruZhao/CIS566FinalProject)
-  - [Snail](https://www.shadertoy.com/view/ld3Gz2)
-  - [Journey](https://www.shadertoy.com/view/ldlcRf)
-  - [Big Hero 6 Wormhole](https://2.bp.blogspot.com/-R-6AN2cWjwg/VTyIzIQSQfI/AAAAAAAABLA/GC0yzzz4wHw/s1600/big-hero-6-disneyscreencaps.com-10092.jpg)
-
-### A GAME LEVEL
-- Like generations of game makers before us, create a game which generates an navigable environment (eg. a roguelike dungeon, platforms) and some sort of goal or conflict (eg. enemy agents to avoid or items to collect). Aim to create an experience that will challenge players and vary noticeably in different playthroughs, whether that means procedural dungeon generation, careful resource management or an interesting AI model. Focus on designing a system that is capable of generating complex challenges and goals.
-- Examples:
-  - [Rhythm-based Mario Platformer](https://github.com/sgalban/platformer-gen-2D)
-  - [Pokémon Ice Puzzle Generator](https://github.com/jwang5675/Ice-Puzzle-Generator)
-  - [Abstract Exploratory Game](https://github.com/MauKMu/procedural-final-project)
-  - [Tiny Wings](https://github.com/irovira/TinyWings)
-  - Spore
-  - Dwarf Fortress
-  - Minecraft
-  - Rogue
-
-### AN ANIMATED ENVIRONMENT / MUSIC VISUALIZER
-- Create an environment full of interactive procedural animation. The goal of this project is to create an environment that feels responsive and alive. Whether or not animations are musically-driven, sound should be an important component. Focus on user interactions, motion design and experimental interfaces.
-- Examples:
-  - [The Darkside](https://github.com/morganherrmann/thedarkside)
-  - [Music Visualizer](https://yuruwang.github.io/MusicVisualizer/)
-  - [Abstract Mesh Animation](https://github.com/mgriley/cis566_finalproj)
-  - [Panoramical](https://www.youtube.com/watch?v=gBTTMNFXHTk)
-  - [Bound](https://www.youtube.com/watch?v=aE37l6RvF-c)
-
-### YOUR OWN PROPOSAL
-- You are of course welcome to propose your own topic . Regardless of what you choose, you and your team must research your topic and relevant techniques and come up with a detailed plan of execution. You will meet with some subset of the procedural staff before starting implementation for approval.
+## References
+- [unity-audio-spectrum](https://github.com/keijiro/unity-audio-spectrum)
+- [KIFS fractals tutorial](https://youtu.be/__dSLc7-Cpo?si=G0Z9K2c7RjMLnStR)
+- [Noise functions](https://iquilezles.org/articles/gradientnoise/) / [2D](https://iquilezles.org/articles/distfunctions2d/) / [3D SDFs](https://iquilezles.org/articles/distfunctions/) by Inigo Quilez

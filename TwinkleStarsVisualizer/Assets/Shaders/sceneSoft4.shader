@@ -244,14 +244,10 @@ Shader "Unlit/sceneSoft4"
             float3 shootRays(float2 uv)
             {
                 // camera setup
-                float3 EYEPOS = _CameraPos;
-                float3 REF = _CameraTarget;
+                float3 EYEPOS = float3(0.0, 1.5, 3.0);
+                float3 REF = 0;//'_CameraTarget;
                 int switchBt = (_intBeat / 4) % 4;
-                //float3 EYEPOS;
-                //float3 REF;
-                // cameraMove(EYEPOS, REF, switchBt);
                 
-                // EYEPOS = float3(0.0, 2., 1.0);
                 float3 cameraForward = normalize(REF - EYEPOS);
                 float3 cameraRight = normalize(cross(cameraForward, WORLD_UP));
                 float3 cameraUp = normalize(cross(cameraRight, cameraForward));
@@ -312,7 +308,15 @@ Shader "Unlit/sceneSoft4"
                 
                 col = shootRays(uv);
 
+                // visualization kof frac 2d
+                // float scaleXY;
+                // col.rg = kofFractal4(uv, 2., scaleXY);
+                // col.b = 0;
+                // col = step(0., col.r);
+                // ---
+
                 return float4(col, 1.);
+                
             }
             ENDCG
         }
@@ -377,7 +381,7 @@ Shader "Unlit/sceneSoft4"
                float freq = 10.;
                float3 starOverlay = starRand(uv, freq) * float3(1., 1., 0.8);
 
-               col = lerp(col, starOverlay, starOverlay.x * 0.3);
+               // col = lerp(col, starOverlay, starOverlay.x * 0.3);
 
                 // col = 1. - col;
                 return float4(col, 1);

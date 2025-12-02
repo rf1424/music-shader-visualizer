@@ -470,9 +470,6 @@ Shader "Unlit/sceneMixes"
                     col = hsv2rgb(float3(h, col.y, col.z));
                 }
 
-                // col = (col - 0.5) * 5. + 0.5;
-                // col = pow(col, 10.);
-                // col1 = posterize(col1, 10.);
 
                 // overlay outlines
                 float3 outline1 = EdgeCrossFilter(i.uv + 0.2);

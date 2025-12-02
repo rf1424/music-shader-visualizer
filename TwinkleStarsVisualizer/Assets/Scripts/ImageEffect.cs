@@ -83,6 +83,11 @@ public class ImageEffect : MonoBehaviour
         Shader.SetGlobalFloat("_fracBeat", fracBeat);
     }
 
+    void Start()
+    {
+        Application.targetFrameRate = 60;
+    }
+
     void OnEnable()
     {
         rt1 = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGB32);
