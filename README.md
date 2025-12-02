@@ -6,7 +6,7 @@
 
 This was an attempt for me to create a real-time music video/audio visualizer entirely using shaders.
 For my music, I used variations from [*7 Variations of Twinkle Twinkle Little Star*](https://youtu.be/IpqFDOliUpA?si=YhmFR4N3xhVINMSU) by the pianist Hayato Sumino.
-My goal was to make a different shader scene for different variations of the music that match the tone of the music.
+My goal was to make a different shader that match the tone of each variation.
 I used Unity as my platform. 
 
 
@@ -54,7 +54,7 @@ Domain-repeat along z-axis:
 Twist along z:
 ![Tunnel Domain Rep2](image/tunnelDomainRep2.png)
 #### KIFS Fractals
-I followed this [tutorial]((https://youtu.be/__dSLc7-Cpo?si=G0Z9K2c7RjMLnStR)) create KIFS fractals. This is a technique that folds UV space recursively to create fractals like origami.
+I followed this [tutorial](https://youtu.be/__dSLc7-Cpo?si=G0Z9K2c7RjMLnStR) create KIFS fractals. This is a technique that folds UV space recursively to create fractals like origami.
 
 ![Kof Fold0](image/kofFold0.png)
 ![Kof Fold1](image/kofFold1.png)
@@ -104,15 +104,15 @@ Overlay outline with distortion:
 ## Post Mortem
 I had a lot of fun writing shaders. I learned a lot of interesting shader and audio visual techniques. 
 Thinking of a way to visualize audio nicely was a challenge, and I hope to explore 
-how others creatively translate audio to visual more!
+how others creatively translate audio to visual more.
 
-I’ve been considering why this project makes sense to build with real-time shaders. At times, I spent a lot of 
+I have been considering why this project makes sense to build with real-time shaders. At times, I spent a lot of 
 effort making dynamic camera movements or optimizing runtime performance. These were tasks that might have been 
 simpler in a traditional 3D tool, especially since this project was tied to a specific audio track.
-At the same time many cool techniques built on shader capabilities-fractal generation, domain repetition, smooth 
+At the same time many cool techniques built on shader capabilities - fractal generation, domain repetition, smooth 
 SDF blending, and other procedural techniques that are hard to achieve as efficiently with other tools. 
 I hope to explore more on what shaders are good at so I can utilize its power to a greater extent. Overall this project
-was a great balance of technical and artistic :star:
+was a great combination of technical and artistic :star:
 
 ## References
 - [unity-audio-spectrum](https://github.com/keijiro/unity-audio-spectrum)
